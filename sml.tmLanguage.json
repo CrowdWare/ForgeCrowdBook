@@ -1,0 +1,144 @@
+{
+  "name": "SML",
+  "scopeName": "source.nocode-sml",
+  "patterns": [
+    {
+      "include": "#comments"
+    },
+    {
+      "include": "#resourceLinks"
+    },
+    {
+      "include": "#strings"
+    },
+    {
+      "include": "#nodeNames"
+    },
+    {
+      "include": "#propertyKeys"
+    },
+    {
+      "include": "#booleans"
+    },
+    {
+      "include": "#numbers"
+    },
+    {
+      "include": "#enumValues"
+    },
+    {
+      "include": "#punctuation"
+    }
+  ],
+  "repository": {
+    "resourceLinks": {
+      "patterns": [
+        {
+          "name": "variable.language.resource-link.sml",
+          "match": "@[A-Za-z_][A-Za-z0-9_]*(?:\\.[A-Za-z_][A-Za-z0-9_]*)+"
+        }
+      ]
+    },
+    "comments": {
+      "patterns": [
+        {
+          "name": "comment.line.double-slash.sml",
+          "match": "//.*$"
+        },
+        {
+          "name": "comment.block.sml",
+          "begin": "/\\*",
+          "end": "\\*/"
+        }
+      ]
+    },
+    "strings": {
+      "patterns": [
+        {
+          "name": "string.quoted.double.sml",
+          "begin": "\"",
+          "end": "\"",
+          "patterns": [
+            {
+              "name": "constant.character.escape.sml",
+              "match": "\\\\[\\\"nrt]"
+            }
+          ]
+        }
+      ]
+    },
+    "nodeNames": {
+      "patterns": [
+        {
+          "name": "meta.node.name.sml",
+          "match": "\\b([A-Za-z_][A-Za-z0-9_]*)\\b(?=\\s*\\{)",
+          "captures": {
+            "1": {
+              "name": "constant.language.boolean.sml"
+            }
+          }
+        }
+      ]
+    },
+    "propertyKeys": {
+      "patterns": [
+        {
+          "name": "meta.property.sml",
+          "match": "\\b([A-Za-z_][A-Za-z0-9_.-]*)(\\s*:)",
+          "captures": {
+            "1": {
+              "name": "variable.other.property.sml"
+            },
+            "2": {
+              "name": "punctuation.separator.key-value.sml"
+            }
+          }
+        }
+      ]
+    },
+    "booleans": {
+      "patterns": [
+        {
+          "name": "constant.language.boolean.sml",
+          "match": "\\b(?:true|false)\\b"
+        }
+      ]
+    },
+    "numbers": {
+      "patterns": [
+        {
+          "name": "constant.numeric.sml",
+          "match": "(?<![A-Za-z0-9_.-])-?(?:\\d+\\.\\d+|\\.\\d+|\\d+)\\b"
+        }
+      ]
+    },
+    "enumValues": {
+      "patterns": [
+        {
+          "name": "constant.language.enum.sml",
+          "match": "\\b(?:closeQuery|open|save|saveAs|animPlay|animStop|animRewind|animScrub|perspectiveNear|perspectiveDefault|perspectiveFar|zoomIn|zoomOut|cameraReset|layout|fixed|app|document|left|right|top|bottom)\\b"
+        }
+      ]
+    },
+    "punctuation": {
+      "patterns": [
+        {
+          "name": "punctuation.section.block.begin.sml",
+          "match": "\\{"
+        },
+        {
+          "name": "punctuation.section.block.end.sml",
+          "match": "\\}"
+        },
+        {
+          "name": "punctuation.separator.comma.sml",
+          "match": ","
+        },
+        {
+          "name": "keyword.operator.pipe.sml",
+          "match": "\\|"
+        }
+      ]
+    }
+  }
+}

@@ -1,0 +1,79 @@
+.sml-page-shell {
+  padding-top: 2rem;
+  padding-bottom: 3rem;
+}
+
+.sml-page,
+.sml-column {
+  display: flex;
+  flex-direction: column;
+}
+
+.sml-row {
+  display: flex;
+  flex-direction: row;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.sml-row > * {
+  flex: 1 1 0;
+}
+
+.sml-image {
+  display: block;
+  max-width: 100%;
+  height: auto;
+}
+
+.sml-spacer {
+  width: 100%;
+}
+
+.sml-render-root > :first-child {
+  margin-top: 0;
+}
+
+.sml-card {
+  border: 1px solid rgba(0, 0, 0, 0.12);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.92);
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.08);
+}
+
+.sml-card-body {
+  padding: 1rem;
+}
+
+.sml-card-title {
+  margin: 0 0 0.35rem;
+}
+
+.sml-card-subtitle {
+  margin: 0 0 1rem;
+  opacity: 0.8;
+}
+
+body.sml-canvas-mode {
+  margin: 0;
+  background: #0f172a;
+  color: #e5e7eb;
+}
+
+.sml-canvas-root {
+  min-height: 100vh;
+  width: 100%;
+  max-width: none;
+  margin: 0;
+  padding: 0;
+}
+
+body.sml-canvas-mode .sml-card {
+  border: 1px solid rgba(148, 163, 184, 0.35);
+  background: rgba(15, 23, 42, 0.72);
+  box-shadow: 0 10px 32px rgba(2, 6, 23, 0.45);
+}
+
+body.sml-canvas-mode .sml-card-subtitle {
+  color: rgba(226, 232, 240, 0.8);
+}
