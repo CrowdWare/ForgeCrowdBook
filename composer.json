@@ -1,0 +1,8 @@
+{
+  "name": "art/sml-wp-plugin",
+  "description": "SML WordPress plugin with optional Twig-based semantic rendering",
+  "type": "wordpress-plugin",
+  "require": {
+    "twig/twig": "^3.0"
+  }
+}

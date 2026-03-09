@@ -1,0 +1,9 @@
+<section{{ attrs|raw }}>
+    {% if headline is defined and headline %}
+        <h1>{{ headline }}</h1>
+    {% endif %}
+    {% if subheadline is defined and subheadline %}
+        <p>{{ subheadline }}</p>
+    {% endif %}
+    {{ content|raw }}
+</section>

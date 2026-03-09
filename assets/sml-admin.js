@@ -12,12 +12,12 @@
     }
   }
 
-  function toMonarch(enumWords) {
+  function toSmlMonarch(enumWords) {
     var enums = enumWords.length ? enumWords : ['left', 'right', 'top', 'bottom'];
     return {
       defaultToken: '',
       tokenPostfix: '.sml',
-      keywords: ['Page', 'Row', 'Column', 'Card', 'Link', 'Markdown', 'Image', 'Spacer'],
+      keywords: ['Page', 'Hero', 'Row', 'Column', 'Card', 'Link', 'Markdown', 'Image', 'Spacer', 'Assets', 'Head', 'Foot', 'CssTemplate', 'JsTemplate'],
       typeKeywords: ['true', 'false'],
       enumKeywords: enums,
       tokenizer: {
@@ -28,7 +28,7 @@
           [/"([^"\\]|\\.)*$/, 'string.invalid'],
           [/"/, { token: 'string.quote', next: '@string' }],
           [/\b(?:true|false)\b/, 'keyword'],
-          [/\b(?:Page|Row|Column|Card|Link|Markdown|Image|Spacer)\b(?=\s*\{)/, 'type.identifier'],
+          [/\b(?:Page|Hero|Row|Column|Card|Link|Markdown|Image|Spacer|Assets|Head|Foot|CssTemplate|JsTemplate)\b(?=\s*\{)/, 'type.identifier'],
           [/\b[A-Za-z_][A-Za-z0-9_.-]*\b(?=\s*:)/, 'variable'],
           [/\b(?:-?(?:\d+\.\d+|\.\d+|\d+))\b/, 'number'],
           [new RegExp('\\b(?:' + enums.join('|').replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + ')\\b'), 'keyword.control'],
@@ -52,42 +52,112 @@
     };
   }
 
+  function toTwigMonarch() {
+    return {
+      defaultToken: '',
+      tokenPostfix: '.twig',
+      tokenizer: {
+        root: [
+          [/\{#/, { token: 'comment.twig', next: '@twigComment' }],
+          [/\{\{[-~]?/, { token: 'delimiter.twig', next: '@twigOutput' }],
+          [/\{%[-~]?/, { token: 'delimiter.twig', next: '@twigTag' }],
+          [/[^\{]+/, ''],
+          [/\{/, '']
+        ],
+        twigComment: [
+          [/#\}/, { token: 'comment.twig', next: '@pop' }],
+          [/./, 'comment.twig']
+        ],
+        twigOutput: [
+          [/[-~]?\}\}/, { token: 'delimiter.twig', next: '@pop' }],
+          [/\|[A-Za-z_][A-Za-z0-9_]*/, 'type.identifier'],
+          [/\b(?:true|false|null)\b/, 'keyword'],
+          [/"([^"\\]|\\.)*"/, 'string'],
+          [/'([^'\\]|\\.)*'/, 'string'],
+          [/\b\d+(?:\.\d+)?\b/, 'number'],
+          [/\b[A-Za-z_][A-Za-z0-9_]*\b/, 'variable']
+        ],
+        twigTag: [
+          [/[-~]?%\}/, { token: 'delimiter.twig', next: '@pop' }],
+          [/\b(?:if|endif|for|endfor|set|block|endblock|extends|include|with|endwith|else|elseif|macro|endmacro)\b/, 'keyword'],
+          [/\b(?:true|false|null)\b/, 'keyword'],
+          [/"([^"\\]|\\.)*"/, 'string'],
+          [/'([^'\\]|\\.)*'/, 'string'],
+          [/\b\d+(?:\.\d+)?\b/, 'number'],
+          [/\b[A-Za-z_][A-Za-z0-9_]*\b/, 'variable']
+        ]
+      }
+    };
+  }
+
+  function createEditor(hostId, textareaId, languageId, options) {
+    var textarea = document.getElementById(textareaId);
+    var host = document.getElementById(hostId);
+    if (!textarea || !host) {
+      return null;
+    }
+
+    host.style.height = (options && options.height) || '460px';
+    textarea.style.display = 'none';
+
+    var editor = monaco.editor.create(host, {
+      value: textarea.value || '',
+      language: languageId,
+      theme: 'vs-dark',
+      minimap: { enabled: false },
+      automaticLayout: true,
+      fontSize: 14,
+      tabSize: 2,
+      insertSpaces: true,
+      scrollBeyondLastLine: false,
+      wordWrap: (options && options.wordWrap) || 'off'
+    });
+
+    return {
+      textarea: textarea,
+      editor: editor
+    };
+  }
+
   function initMonaco() {
     var cfg = window.SML_EDITOR_CONFIG || {};
-    var textarea = document.getElementById('sml_source');
-    var editorHost = document.getElementById('sml_monaco_editor');
-    if (!textarea || !editorHost || typeof require === 'undefined') {
+    if (typeof require === 'undefined') {
       return;
     }
 
     require.config({ paths: { vs: cfg.vsPath } });
     require(['vs/editor/editor.main'], function () {
-      var languageId = cfg.languageId || 'sml';
+      var smlLanguageId = cfg.languageId || 'sml';
       var enumWords = extractEnumWords(cfg.tmGrammar || {});
 
-      monaco.languages.register({ id: languageId });
-      monaco.languages.setLanguageConfiguration(languageId, cfg.languageConfiguration || {});
-      monaco.languages.setMonarchTokensProvider(languageId, toMonarch(enumWords));
+      monaco.languages.register({ id: smlLanguageId });
+      monaco.languages.setLanguageConfiguration(smlLanguageId, cfg.languageConfiguration || {});
+      monaco.languages.setMonarchTokensProvider(smlLanguageId, toSmlMonarch(enumWords));
 
-      editorHost.style.height = '460px';
-      textarea.style.display = 'none';
+      var twigLanguageId = 'sml-twig';
+      monaco.languages.register({ id: twigLanguageId });
+      monaco.languages.setMonarchTokensProvider(twigLanguageId, toTwigMonarch());
 
-      var editor = monaco.editor.create(editorHost, {
-        value: textarea.value || '',
-        language: languageId,
-        theme: 'vs-dark',
-        minimap: { enabled: false },
-        automaticLayout: true,
-        fontSize: 14,
-        tabSize: 2,
-        insertSpaces: true,
-        scrollBeyondLastLine: false,
-      });
+      var editors = [];
+      var sml = createEditor('sml_monaco_editor', 'sml_source', smlLanguageId, { height: '460px', wordWrap: 'on' });
+      if (sml) editors.push(sml);
 
-      var form = textarea.closest('form');
+      var twigTemplate = createEditor('sml_template_monaco_editor', 'sml_template_source', twigLanguageId, { height: '420px', wordWrap: 'on' });
+      if (twigTemplate) editors.push(twigTemplate);
+
+      var markdownPart = createEditor('sml_markdown_monaco_editor', 'sml_markdown_source', 'markdown', { height: '420px', wordWrap: 'on' });
+      if (markdownPart) editors.push(markdownPart);
+
+      if (!editors.length) {
+        return;
+      }
+
+      var form = editors[0].textarea.closest('form');
       if (form) {
         form.addEventListener('submit', function () {
-          textarea.value = editor.getValue();
+          editors.forEach(function (entry) {
+            entry.textarea.value = entry.editor.getValue();
+          });
         });
       }
     });

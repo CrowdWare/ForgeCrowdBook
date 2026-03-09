@@ -6,6 +6,93 @@ if (!defined('ABSPATH')) {
 
 class SML_Renderer
 {
+    private ?object $twig = null;
+    private ?object $twig_loader = null;
+    /**
+     * @var array<string, bool>
+     */
+    private array $emitted_css = [];
+    /**
+     * @var array<string, bool>
+     */
+    private array $emitted_js = [];
+
+    /**
+     * @var array<string, string>
+     */
+    private array $template_map = [
+        'page' => 'page.twig',
+        'hero' => 'hero.twig',
+    ];
+
+    /**
+     * @var array<string, string>
+     */
+    private array $template_overrides = [];
+
+    public function __construct(?string $template_dir = null, ?array $template_map = null, ?array $template_overrides = null)
+    {
+        if (is_array($template_map)) {
+            $this->setTemplateMap($template_map);
+        }
+        if (is_array($template_overrides)) {
+            $this->setTemplateOverrides($template_overrides);
+        }
+
+        if ($template_dir === null) {
+            $template_dir = dirname(__DIR__) . '/templates';
+        }
+
+        $this->initTwig($template_dir);
+    }
+
+    /**
+     * @param array<string, string> $map
+     */
+    public function setTemplateMap(array $map): void
+    {
+        $normalized = [];
+        foreach ($map as $node => $template) {
+            $node = strtolower(trim((string) $node));
+            $template = trim((string) $template);
+            if ($node === '' || $template === '') {
+                continue;
+            }
+            $normalized[$node] = $template;
+        }
+
+        if ($normalized !== []) {
+            $this->template_map = array_merge($this->template_map, $normalized);
+        }
+    }
+
+    public function registerTemplate(string $node, string $template): void
+    {
+        $node = strtolower(trim($node));
+        $template = trim($template);
+        if ($node === '' || $template === '') {
+            return;
+        }
+
+        $this->template_map[$node] = $template;
+    }
+
+    /**
+     * @param array<string, string> $overrides keyed by template name (e.g. page.twig)
+     */
+    public function setTemplateOverrides(array $overrides): void
+    {
+        $normalized = [];
+        foreach ($overrides as $name => $content) {
+            $name = trim((string) $name);
+            if ($name === '' || !str_ends_with($name, '.twig')) {
+                continue;
+            }
+            $normalized[$name] = (string) $content;
+        }
+        $this->template_overrides = $normalized;
+    }
+
     public function render(array $nodes): string
     {
         $out = '';
@@ -15,12 +102,116 @@ class SML_Renderer
         return $out;
     }
 
+    private function initTwig(string $template_dir): void
+    {
+        if (!class_exists('Twig\\Loader\\FilesystemLoader') || !class_exists('Twig\\Environment')) {
+            return;
+        }
+
+        if (!is_dir($template_dir)) {
+            return;
+        }
+
+        try {
+            $filesystem_loader = new \Twig\Loader\FilesystemLoader($template_dir);
+            $this->twig_loader = $filesystem_loader;
+
+            if ($this->template_overrides !== [] && class_exists('Twig\\Loader\\ArrayLoader') && class_exists('Twig\\Loader\\ChainLoader')) {
+                $array_loader = new \Twig\Loader\ArrayLoader($this->template_overrides);
+                $this->twig_loader = new \Twig\Loader\ChainLoader([$array_loader, $filesystem_loader]);
+            }
+
+            $this->twig = new \Twig\Environment($this->twig_loader, [
+                'cache' => false,
+                'autoescape' => 'html',
+                'strict_variables' => false,
+            ]);
+
+            if (class_exists('Twig\\TwigFunction')) {
+                $this->twig->addFunction(new \Twig\TwigFunction('sml_markdown_part', function (string $part): string {
+                    $raw = $this->loadPart($part);
+                    return $this->markdownToHtml($raw);
+                }, ['is_safe' => ['html']]));
+
+                $this->twig->addFunction(new \Twig\TwigFunction('sml_lang', function (): string {
+                    return $this->getCurrentLanguage();
+                }));
+
+                $this->twig->addFunction(new \Twig\TwigFunction('sml_css', function (string $url): string {
+                    return $this->renderExternalAssetTag($url, 'css');
+                }, ['is_safe' => ['html']]));
+
+                $this->twig->addFunction(new \Twig\TwigFunction('sml_js', function (string $url): string {
+                    return $this->renderExternalAssetTag($url, 'js');
+                }, ['is_safe' => ['html']]));
+            }
+        } catch (Throwable) {
+            $this->twig_loader = null;
+            $this->twig = null;
+        }
+    }
+
     private function renderNode(array $node): string
     {
         $type = strtolower((string) ($node['type'] ?? ''));
         $props = is_array($node['props'] ?? null) ? $node['props'] : [];
         $children = is_array($node['children'] ?? null) ? $node['children'] : [];
 
+        $twig_output = $this->renderNodeWithTwig($type, $props, $children);
+        if ($twig_output !== null) {
+            return $twig_output;
+        }
+
+        return $this->renderNodeFallback($type, $props, $children);
+    }
+
+    private function renderNodeWithTwig(string $type, array $props, array $children): ?string
+    {
+        $template = $this->template_map[$type] ?? '';
+        if ($template === '' || $this->twig === null || $this->twig_loader === null) {
+            return null;
+        }
+
+        if (!$this->twigTemplateExists($template)) {
+            return null;
+        }
+
+        $content = $this->renderChildren($children);
+        $context = $props;
+        $class_attr = $this->buildClassAttr($this->defaultClassForType($type), $props);
+        $style_attr = $this->buildStyle($props);
+        $context['props'] = $props;
+        $context['children'] = $children;
+        $context['content'] = $content;
+        $context['type'] = $type;
+        $context['class_attr'] = $class_attr;
+        $context['style_attr'] = $style_attr;
+        $context['attrs'] = ' class="' . esc_attr($class_attr) . '"' . $style_attr;
+        $context['lang'] = $this->getCurrentLanguage();
+
+        try {
+            $html = $this->twig->render($template, $context);
+            return is_string($html) ? $html : null;
+        } catch (Throwable) {
+            return null;
+        }
+    }
+
+    private function twigTemplateExists(string $template): bool
+    {
+        if ($this->twig_loader === null || !method_exists($this->twig_loader, 'exists')) {
+            return false;
+        }
+
+        try {
+            return (bool) $this->twig_loader->exists($template);
+        } catch (Throwable) {
+            return false;
+        }
+    }
+
+    private function renderNodeFallback(string $type, array $props, array $children): string
+    {
         return match ($type) {
             'page' => $this->renderContainer('main', 'sml-page', $props, $children),
             'row' => $this->renderContainer('div', 'sml-row', $props, $children),
@@ -34,15 +225,30 @@ class SML_Renderer
         };
     }
 
+    private function renderChildren(array $children): string
+    {
+        $content = '';
+        foreach ($children as $child) {
+            $content .= $this->renderNode($child);
+        }
+
+        return $content;
+    }
+
+    private function defaultClassForType(string $type): string
+    {
+        return match ($type) {
+            'page' => 'sml-page',
+            'hero' => 'sml-hero',
+            default => 'sml-node sml-' . sanitize_html_class($type),
+        };
+    }
+
     private function renderContainer(string $tag, string $class, array $props, array $children): string
     {
         $style = $this->buildStyle($props);
         $class_attr = $this->buildClassAttr($class, $props);
-        $content = '';
-
-        foreach ($children as $child) {
-            $content .= $this->renderNode($child);
-        }
+        $content = $this->renderChildren($children);
 
         return '<' . $tag . ' class="' . esc_attr($class_attr) . '"' . $style . '>' . $content . '</' . $tag . '>';
     }
@@ -102,9 +308,7 @@ class SML_Renderer
         if ($subtitle !== '') {
             $inner .= '<p class="sml-card-subtitle">' . esc_html($subtitle) . '</p>';
         }
-        foreach ($children as $child) {
-            $inner .= $this->renderNode($child);
-        }
+        $inner .= $this->renderChildren($children);
 
         $class_attr = $this->buildClassAttr('sml-card', $props);
         return '<article class="' . esc_attr($class_attr) . '"' . $style . '><div class="sml-card-body">' . $inner . '</div></article>';
@@ -135,9 +339,7 @@ class SML_Renderer
         if ($text !== '') {
             $content = esc_html($text);
         } else {
-            foreach ($children as $child) {
-                $content .= $this->renderNode($child);
-            }
+            $content = $this->renderChildren($children);
             if ($content === '') {
                 $content = esc_html($href);
             }
@@ -150,6 +352,13 @@ class SML_Renderer
     {
         $part = ltrim($part, '/');
         $part = str_replace('..', '', $part);
+
+        if (function_exists('sml_pages_get_markdown_part_content')) {
+            $db_part = sml_pages_get_markdown_part_content($part);
+            if (is_string($db_part) && $db_part !== '') {
+                return $db_part;
+            }
+        }
 
         $upload = wp_upload_dir();
         $base = trailingslashit($upload['basedir']) . 'sml-parts/';
@@ -376,5 +585,75 @@ class SML_Renderer
         $merged .= $extraDeclarations;
 
         return ' style="' . esc_attr($merged) . '"';
+    }
+
+    private function getCurrentLanguage(): string
+    {
+        // Polylang
+        if (function_exists('pll_current_language')) {
+            $lang = pll_current_language('slug');
+            if (is_string($lang) && $lang !== '') {
+                return strtolower($lang);
+            }
+        }
+
+        // WPML
+        if (function_exists('apply_filters')) {
+            $lang = apply_filters('wpml_current_language', null);
+            if (is_string($lang) && $lang !== '') {
+                return strtolower($lang);
+            }
+        }
+
+        if (function_exists('determine_locale')) {
+            $locale = (string) determine_locale();
+            if ($locale !== '') {
+                return strtolower(substr($locale, 0, 2));
+            }
+        }
+
+        $locale = (string) get_locale();
+        if ($locale !== '') {
+            return strtolower(substr($locale, 0, 2));
+        }
+
+        return 'en';
+    }
+
+    private function renderExternalAssetTag(string $url, string $type): string
+    {
+        $safe_url = $this->sanitizeExternalAssetUrl($url);
+        if ($safe_url === '') {
+            return '';
+        }
+
+        if ($type === 'css') {
+            if (isset($this->emitted_css[$safe_url])) {
+                return '';
+            }
+            $this->emitted_css[$safe_url] = true;
+            return '<link rel="stylesheet" href="' . esc_url($safe_url) . '" />';
+        }
+
+        if ($type === 'js') {
+            if (isset($this->emitted_js[$safe_url])) {
+                return '';
+            }
+            $this->emitted_js[$safe_url] = true;
+            return '<script src="' . esc_url($safe_url) . '" defer></script>';
+        }
+
+        return '';
+    }
+
+    private function sanitizeExternalAssetUrl(string $url): string
+    {
+        $url = trim($url);
+        if ($url === '') {
+            return '';
+        }
+
+        $validated = esc_url_raw($url, ['https']);
+        return is_string($validated) ? $validated : '';
     }
 }
