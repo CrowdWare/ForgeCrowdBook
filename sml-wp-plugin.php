@@ -3,7 +3,7 @@
  * Plugin Name: Forge WP SML Compiler
  * Plugin URI: https://codeberg.org/CrowdWare/ForgeCrowdBook
  * Description: SML Compiler for WordPress: build pages with SML, Twig and Markdown, then ship super fast static HTML.
- * Version: 0.1.64
+ * Version: 0.1.65
  * Author: Artanidos
  * Author URI: https://codeberg.org/CrowdWare
  */
@@ -606,10 +606,10 @@ class SML_Pages_Plugin
         $template_name = strtolower($template_name);
 
         if ($template_name === 'page.twig') {
-            $this->recompile_matching_pages(static function (string $source): bool {
-                return str_contains($source, 'Page {');
-            });
-            return;
+        $this->recompile_matching_pages(static function (string $source): bool {
+            return str_contains($source, 'Page {');
+        });
+        return;
         }
 
         if ($template_name === 'hero.twig') {
@@ -629,13 +629,13 @@ class SML_Pages_Plugin
     {
         $this->recompile_matching_pages(static function (string $source): bool {
             return stripos($source, 'IncludeSml') !== false;
-        });
+        }, false);
     }
 
     /**
      * @param callable(string): bool $matches
      */
-    private function recompile_matching_pages(callable $matches): void
+    private function recompile_matching_pages(callable $matches, bool $refresh_assets = true): void
     {
         $pages = get_posts([
             'post_type' => 'sml_page',
@@ -662,11 +662,13 @@ class SML_Pages_Plugin
             $rendered = $this->compile_source($source);
             update_post_meta($page_id, self::META_RENDERED, $rendered);
 
-            $assets = $this->extract_page_assets_from_source($source);
-            if ($assets['css'] === [] && $assets['js'] === []) {
-                delete_post_meta($page_id, self::META_PAGE_ASSETS);
-            } else {
-                update_post_meta($page_id, self::META_PAGE_ASSETS, wp_json_encode($assets));
+            if ($refresh_assets) {
+                $assets = $this->extract_page_assets_from_source($source);
+                if ($assets['css'] === [] && $assets['js'] === []) {
+                    delete_post_meta($page_id, self::META_PAGE_ASSETS);
+                } else {
+                    update_post_meta($page_id, self::META_PAGE_ASSETS, wp_json_encode($assets));
+                }
             }
         }
     }
@@ -707,9 +709,9 @@ class SML_Pages_Plugin
             return;
         }
 
-        wp_enqueue_style('sml-admin', plugins_url('assets/sml-admin.css', __FILE__), [], '0.1.64');
+        wp_enqueue_style('sml-admin', plugins_url('assets/sml-admin.css', __FILE__), [], '0.1.65');
         wp_enqueue_script('sml-monaco-loader', 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.52.2/min/vs/loader.min.js', [], null, true);
-        wp_enqueue_script('sml-admin', plugins_url('assets/sml-admin.js', __FILE__), ['sml-monaco-loader'], '0.1.64', true);
+        wp_enqueue_script('sml-admin', plugins_url('assets/sml-admin.js', __FILE__), ['sml-monaco-loader'], '0.1.65', true);
 
         $language_config_path = __DIR__ . '/language-configuration.json';
         $grammar_path = __DIR__ . '/sml.tmLanguage.json';

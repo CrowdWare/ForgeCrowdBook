@@ -213,7 +213,7 @@ class CrowdBook_Plugin
             'crowdbook-css',
             plugins_url('assets/crowdbook.css', __FILE__),
             [],
-            '0.1.64'
+            '0.1.65'
         );
 
         wp_enqueue_script('sml-monaco-loader', 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.52.2/min/vs/loader.min.js', [], null, true);
@@ -229,7 +229,7 @@ class CrowdBook_Plugin
             'crowdbook-js',
             plugins_url('assets/crowdbook.js', __FILE__),
             ['sml-monaco-loader', 'crowdbook-isotope'],
-            '0.1.64',
+            '0.1.65',
             true
         );
 
