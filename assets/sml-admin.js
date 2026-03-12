@@ -14,10 +14,12 @@
 
   function toSmlMonarch(enumWords) {
     var enums = enumWords.length ? enumWords : ['left', 'right', 'top', 'bottom'];
+    var switchNodes = ['When', 'Desktop', 'Mobile', 'Portrait', 'Landscape', 'MobilePortrait', 'MobileLandscape', 'Default'];
+    var contentNodes = ['Page', 'Hero', 'Row', 'Column', 'Card', 'Link', 'Markdown', 'Image', 'Spacer', 'Assets', 'Head', 'Foot', 'CssTemplate', 'JsTemplate', 'IncludeSml'];
     return {
       defaultToken: '',
       tokenPostfix: '.sml',
-      keywords: ['Page', 'Hero', 'Row', 'Column', 'Card', 'Link', 'Markdown', 'Image', 'Spacer', 'Assets', 'Head', 'Foot', 'CssTemplate', 'JsTemplate'],
+      keywords: contentNodes.concat(switchNodes),
       typeKeywords: ['true', 'false'],
       enumKeywords: enums,
       tokenizer: {
@@ -28,7 +30,8 @@
           [/"([^"\\]|\\.)*$/, 'string.invalid'],
           [/"/, { token: 'string.quote', next: '@string' }],
           [/\b(?:true|false)\b/, 'keyword'],
-          [/\b(?:Page|Hero|Row|Column|Card|Link|Markdown|Image|Spacer|Assets|Head|Foot|CssTemplate|JsTemplate)\b(?=\s*\{)/, 'type.identifier'],
+          [new RegExp('\\b(?:' + switchNodes.join('|') + ')\\b(?=\\s*\\{)'), 'keyword.control'],
+          [new RegExp('\\b(?:' + contentNodes.join('|') + ')\\b(?=\\s*\\{)'), 'type.identifier'],
           [/\b[A-Za-z_][A-Za-z0-9_.-]*\b(?=\s*:)/, 'variable'],
           [/\b(?:-?(?:\d+\.\d+|\.\d+|\d+))\b/, 'number'],
           [new RegExp('\\b(?:' + enums.join('|').replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + ')\\b'), 'keyword.control'],

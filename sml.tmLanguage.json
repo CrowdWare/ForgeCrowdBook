@@ -12,6 +12,9 @@
       "include": "#strings"
     },
     {
+      "include": "#responsiveSwitchNodes"
+    },
+    {
       "include": "#nodeNames"
     },
     {
@@ -64,6 +67,18 @@
               "match": "\\\\[\\\"nrt]"
             }
           ]
+        }
+      ]
+    },
+    "responsiveSwitchNodes": {
+      "patterns": [
+        {
+          "name": "keyword.control.conditional.sml",
+          "match": "\\b(?:When|Desktop|Mobile|Portrait|Landscape|MobilePortrait|MobileLandscape|Default)\\b(?=\\s*\\{)"
+        },
+        {
+          "name": "entity.name.function.sml",
+          "match": "\\b(?:IncludeSml)\\b(?=\\s*\\{)"
         }
       ]
     },

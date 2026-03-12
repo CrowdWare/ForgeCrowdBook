@@ -3,7 +3,7 @@
  * Plugin Name: Forge WP SML Compiler
  * Plugin URI: https://codeberg.org/CrowdWare/ForgeCrowdBook
  * Description: SML Compiler for WordPress: build pages with SML, Twig and Markdown, then ship super fast static HTML.
- * Version: 0.1.62
+ * Version: 0.1.64
  * Author: Artanidos
  * Author URI: https://codeberg.org/CrowdWare
  */
@@ -521,6 +521,9 @@ class SML_Pages_Plugin
         } else {
             update_post_meta($post_id, self::META_PAGE_ASSETS, wp_json_encode($assets));
         }
+
+        // If a source page changes, all pages with IncludeSml should refresh automatically.
+        $this->recompile_pages_with_include_sml();
     }
 
     public function save_sml_template(int $post_id, WP_Post $post): void
@@ -622,6 +625,13 @@ class SML_Pages_Plugin
         });
     }
 
+    private function recompile_pages_with_include_sml(): void
+    {
+        $this->recompile_matching_pages(static function (string $source): bool {
+            return stripos($source, 'IncludeSml') !== false;
+        });
+    }
+
     /**
      * @param callable(string): bool $matches
      */
@@ -697,9 +707,9 @@ class SML_Pages_Plugin
             return;
         }
 
-        wp_enqueue_style('sml-admin', plugins_url('assets/sml-admin.css', __FILE__), [], '0.1.62');
+        wp_enqueue_style('sml-admin', plugins_url('assets/sml-admin.css', __FILE__), [], '0.1.64');
         wp_enqueue_script('sml-monaco-loader', 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.52.2/min/vs/loader.min.js', [], null, true);
-        wp_enqueue_script('sml-admin', plugins_url('assets/sml-admin.js', __FILE__), ['sml-monaco-loader'], '0.1.62', true);
+        wp_enqueue_script('sml-admin', plugins_url('assets/sml-admin.js', __FILE__), ['sml-monaco-loader'], '0.1.64', true);
 
         $language_config_path = __DIR__ . '/language-configuration.json';
         $grammar_path = __DIR__ . '/sml.tmLanguage.json';
