@@ -1,0 +1,83 @@
+# Backlog — ForgeCrowdBook
+
+## Functional Requirements
+
+See `SPEC.md` for full specification.
+
+### Core Platform
+- Standalone Go web application — no WordPress, no PHP
+- SQLite database (single file, no external server)
+- Magic Link authentication (no passwords)
+- Book-first workflow: select book on dashboard before editing chapters
+- Markdown is never stored in the database — only source_url is stored
+- Content fetched on demand from author-hosted URLs (GitHub, Codeberg, IPFS)
+- Context-sensitive navigation menu
+
+### i18n
+- Translation via SML files (`i18n/strings-{lang}.sml`) parsed by `sml-go`
+- Supported languages: de, en, eo, pt, fr, es
+- Language selection via cookie, with flag dropdown in nav
+
+### Chapter Registration
+- Authors register a source URL pointing to their own Markdown file
+- Preview widget: paste URL → see rendered preview before submitting
+- After saving: show Preview (fetched + rendered, read-only)
+- Return to Edit mode only via explicit "Edit" button
+- IPFS URLs (`ipfs://`) normalized to configurable gateway
+
+### Moderation
+- Admin dashboard: publish, reject, delete chapters
+- Admin user management: ban users
+- No automatic spam filter (manual moderation only)
+
+### Likes
+- No login required
+- Fingerprint-based (SHA256 of IP + User-Agent)
+- Email notifications at milestones: 1, 5, 10, 25, 50, 100 likes
+
+### Social Sharing
+- Open Graph meta tags per chapter
+- Plain HTML share buttons (Telegram, WhatsApp, Facebook, X, Copy Link)
+
+---
+
+## Tasks
+
+### Phase 1 — Foundation
+- [ ] tasks/go_module_setup.md
+- [ ] tasks/config_parser.md
+- [ ] tasks/db_init.md
+- [ ] tasks/i18n.md
+- [ ] tasks/content_fetcher.md
+
+### Phase 2 — Auth
+- [ ] tasks/auth_magic_link.md
+- [ ] tasks/auth_session.md
+- [ ] tasks/mailer.md
+
+### Phase 3 — Models
+- [ ] tasks/model_user.md
+- [ ] tasks/model_book.md
+- [ ] tasks/model_chapter.md  ← stores source_url, not markdown_content
+- [ ] tasks/model_like.md
+
+### Phase 4 — Handlers
+- [ ] tasks/handler_middleware.md
+- [ ] tasks/handler_home.md
+- [ ] tasks/handler_books.md
+- [ ] tasks/handler_auth.md
+- [ ] tasks/handler_dashboard.md
+- [ ] tasks/handler_chapters.md  ← registration form + preview widget (no EasyMDE)
+- [ ] tasks/handler_admin.md
+- [ ] tasks/handler_api.md
+
+### Phase 5 — Frontend
+- [ ] tasks/templates_base.md
+- [ ] tasks/templates_pages.md
+- [ ] tasks/static_assets.md  ← style.css + preview.js only (no EasyMDE)
+
+### Phase 6 — Tests
+- [ ] tasks/unit_tests_config.md
+- [ ] tasks/unit_tests_auth.md
+- [ ] tasks/unit_tests_fetcher.md
+- [ ] tasks/integration_test.md

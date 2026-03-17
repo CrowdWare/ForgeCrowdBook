@@ -1,4 +1,17 @@
+# Binary
+forgecrowdbook
+
+# SQLite database
+data/*.db
+data/*.db-shm
+data/*.db-wal
+
+# Go
+*.test
+*.out
+
+# macOS
 .DS_Store
-vendor/.DS_Store
-screenshots/
-*.zip
+
+# Config with secrets (use app.sml.example as template)
+app.sml

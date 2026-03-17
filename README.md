@@ -1,64 +1,18 @@
-# ForgeCrowdBook (WordPress Plugin)
+# ForgeCrowdBook
 
-`ForgeCrowdBook` is the main product: a collaborative, moderated book platform inside WordPress.
+A collaborative book platform built in Go. Authors host their own Markdown content on GitHub, Codeberg, or IPFS — ForgeCrowdBook handles discovery, moderation, and publishing.
 
-SML/Twig/Markdown compilation is still included, but it is supporting tooling, not the core focus.
+## Philosophy
 
-## Purpose
+- No passwords — Magic Link authentication only
+- No content lock-in — authors own their files, we only store a URL
+- No third parties — runs entirely on your own server
+- No database server — SQLite, single file
 
-CrowdBook exists to enable open, free books that can evolve over time with community contributions.
+## Status
 
-- readers get free access to knowledge and stories
-- authors can add chapters and improve books collaboratively
-- moderation keeps quality high while preserving openness
-- published content stays stable, while new versions can be reviewed before going live
+Planning phase. See [`SPEC.md`](SPEC.md) for the full specification and [`CWUP/BACKLOG.md`](CWUP/BACKLOG.md) for the task backlog.
 
-## CrowdBook first: core features
+## Related
 
-- Public routes: `/books`, `/book/{book-id}`, `/dashboard`, `/editor`, `/login`, `/register`
-- Author flow:
-  - create books from frontend dashboard
-  - write/edit chapters in Markdown
-  - upload inline images
-  - submit to moderation
-- Moderation flow:
-  - pending/published/rejected chapter states
-  - versioned updates for published chapters (live stays visible until publish)
-  - admin moderation pages for chapters and books
-- Book flow:
-  - prologue + branch cards + chapter-by-chapter reader navigation
-  - cover image upload with resize + preview
-  - book moderation states (`pending`, `active`, `archived`)
-  - versioned book updates (`pending` update over active live version)
-- Security/quality:
-  - spam checks for chapter submissions
-  - likes are account-based (one like per user per chapter)
-
-## Install
-
-1. Copy `sml-wp-plugin` into `wp-content/plugins/`.
-2. Optional: run `composer install` for Twig support.
-3. Activate plugin `SML Pages MVP` in WordPress admin.
-4. Open `/dashboard` (frontend) to create books and content.
-
-## CrowdBook admin pages
-
-- `CrowdBook -> Übersicht`
-- `CrowdBook -> Bücher`
-- `CrowdBook -> Kapitel Moderation`
-- `CrowdBook -> User`
-
-## SML compiler (secondary tooling)
-
-The plugin still ships the original SML compiler stack for page generation:
-
-- custom post types like `sml_page`, `sml_template`, `sml_markdown_part`
-- Monaco editor integration
-- optional Twig templates + Markdown parts
-- static HTML compilation pipeline
-
-This is useful for custom page rendering and templating around CrowdBook content.
-
-## Repository
-
-- Codeberg: `https://codeberg.org/CrowdWare/ForgeCrowdBook`
+- [ForgeCMS](https://codeberg.org/crowdware/forgecms) — the content rendering engine that powers the public reading view
