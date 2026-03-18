@@ -145,6 +145,34 @@ func TestAuthValidTokenCreatesSessionAndRedirects(t *testing.T) {
 	}
 }
 
+func TestAuthBannedUserCannotLogin(t *testing.T) {
+	h, _, database := newAuthHandlerForTest(t)
+
+	user, err := model.CreateUser(database, "banned@example.com", "Banned")
+	if err != nil {
+		t.Fatalf("CreateUser failed: %v", err)
+	}
+	if err := model.BanUser(database, user.ID); err != nil {
+		t.Fatalf("BanUser failed: %v", err)
+	}
+
+	token, err := authpkg.CreateMagicToken(database, "banned@example.com")
+	if err != nil {
+		t.Fatalf("CreateMagicToken failed: %v", err)
+	}
+
+	req := httptest.NewRequest(http.MethodGet, "/auth?token="+token, nil)
+	rec := httptest.NewRecorder()
+	h.Auth(rec, req)
+
+	if rec.Code != http.StatusForbidden {
+		t.Fatalf("expected 403, got %d", rec.Code)
+	}
+	if got := rec.Header().Get("Location"); got != "" {
+		t.Fatalf("did not expect redirect, got %q", got)
+	}
+}
+
 func newAuthHandlerForTest(t *testing.T) (*AuthHandler, *fakeMailer, *sql.DB) {
 	t.Helper()
 

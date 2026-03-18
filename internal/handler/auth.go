@@ -165,6 +165,16 @@ func (h *AuthHandler) Auth(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	user, err := model.GetUserByEmail(h.DB, email)
+	if err != nil {
+		http.Error(w, "failed to load user", http.StatusInternalServerError)
+		return
+	}
+	if user == nil || user.Status == "banned" {
+		h.renderAuthError(w, http.StatusForbidden, "This account is not allowed to sign in.")
+		return
+	}
+
 	auth.CreateSession(w, email, h.Config.SessionSecret)
 	http.Redirect(w, r, "/dashboard", http.StatusSeeOther)
 }

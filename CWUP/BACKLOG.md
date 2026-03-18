@@ -57,19 +57,19 @@ See `SPEC.md` for full specification.
 
 ### Phase 3 — Models
 - [x] tasks/model_user.md
-- [ ] tasks/model_book.md
-- [ ] tasks/model_chapter.md  ← stores source_url, not markdown_content
-- [ ] tasks/model_like.md
+- [x] tasks/model_book.md
+- [x] tasks/model_chapter.md  ← stores source_url, not markdown_content
+- [x] tasks/model_like.md
 
 ### Phase 4 — Handlers
-- [ ] tasks/handler_middleware.md
-- [ ] tasks/handler_home.md
-- [ ] tasks/handler_books.md
-- [ ] tasks/handler_auth.md
-- [ ] tasks/handler_dashboard.md
-- [ ] tasks/handler_chapters.md  ← registration form + preview widget (no EasyMDE)
-- [ ] tasks/handler_admin.md
-- [ ] tasks/handler_api.md
+- [x] tasks/handler_middleware.md
+- [x] tasks/handler_home.md
+- [x] tasks/handler_books.md
+- [x] tasks/handler_auth.md
+- [x] tasks/handler_dashboard.md
+- [x] tasks/handler_chapters.md  ← registration form + preview widget (no EasyMDE)
+- [x] tasks/handler_admin.md
+- [x] tasks/handler_api.md
 
 ### Phase 5 — Frontend
 - [ ] tasks/templates_base.md

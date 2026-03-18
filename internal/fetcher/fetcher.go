@@ -97,6 +97,42 @@ func (f *Fetcher) FetchHTML(url string) (string, error) {
 	return out.String(), nil
 }
 
+func (f *Fetcher) FetchMarkdown(url string) (string, error) {
+	normalizedURL := f.NormalizeURL(url)
+	if normalizedURL == "" {
+		return "", fmt.Errorf("URL is empty")
+	}
+
+	content, err := f.fetchContent(normalizedURL)
+	if err != nil {
+		return "", err
+	}
+	return string(content), nil
+}
+
+func (f *Fetcher) Invalidate(url string) error {
+	normalizedURL := f.NormalizeURL(url)
+	if normalizedURL == "" {
+		return fmt.Errorf("URL is empty")
+	}
+
+	f.mu.Lock()
+	entry, ok := f.manifest[normalizedURL]
+	if ok {
+		delete(f.manifest, normalizedURL)
+	}
+	f.mu.Unlock()
+
+	if ok {
+		_ = os.Remove(filepath.Join(f.cacheDir, entry.FileName))
+	}
+
+	if err := f.saveManifest(); err != nil {
+		return err
+	}
+	return nil
+}
+
 func (f *Fetcher) fetchContent(url string) ([]byte, error) {
 	f.mu.Lock()
 	entry, hasEntry := f.manifest[url]
