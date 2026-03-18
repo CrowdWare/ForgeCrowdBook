@@ -88,8 +88,8 @@ func TestSetLangSetsSessionCookieAndRedirects(t *testing.T) {
 	if cookies[0].Name != "lang" || cookies[0].Value != "de" {
 		t.Fatalf("unexpected cookie %+v", cookies[0])
 	}
-	if cookies[0].MaxAge != 0 {
-		t.Fatalf("expected session cookie max-age 0, got %d", cookies[0].MaxAge)
+	if cookies[0].MaxAge != 365*24*60*60 {
+		t.Fatalf("expected max-age %d, got %d", 365*24*60*60, cookies[0].MaxAge)
 	}
 	if cookies[0].SameSite != http.SameSiteLaxMode {
 		t.Fatalf("expected SameSite Lax, got %v", cookies[0].SameSite)

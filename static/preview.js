@@ -12,8 +12,10 @@ if (loadBtn) {
       return;
     }
 
+    const csrf = document.querySelector('meta[name="csrf-token"]')?.content ?? "";
     const form = new URLSearchParams();
     form.set("source_url", url);
+    form.set("_csrf", csrf);
     const res = await fetch(loadBtn.dataset.url || "/dashboard/preview", {
       method: "POST",
       headers: { "Content-Type": "application/x-www-form-urlencoded" },

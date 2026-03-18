@@ -75,6 +75,10 @@ func LoadConfig(path string) (*Config, error) {
 		}
 	}
 
+	if len(cfg.SessionSecret) < 32 {
+		return nil, fmt.Errorf("session_secret must be at least 32 characters long")
+	}
+
 	return cfg, nil
 }
 

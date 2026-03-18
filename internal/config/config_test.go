@@ -13,7 +13,7 @@ name: "ForgeCrowdBook"
 base_url: "http://localhost:8090"
 db: "./data/test.db"
 port: "8088"
-session_secret: "secret"
+session_secret: "a-very-secure-test-secret-at-least-32-chars"
 admin_email: "admin@example.com"
 SMTP {
 host: "smtp.example.com"
@@ -47,6 +47,7 @@ func TestLoadConfigAppliesDefaults(t *testing.T) {
 	path := filepath.Join(t.TempDir(), "app.sml")
 	content := `App {
 name: "ForgeCrowdBook"
+session_secret: "a-very-secure-test-secret-at-least-32-chars"
 }`
 	if err := os.WriteFile(path, []byte(content), 0o644); err != nil {
 		t.Fatalf("write config: %v", err)

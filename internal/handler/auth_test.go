@@ -6,6 +6,7 @@ import (
 	"net/http/httptest"
 	"net/url"
 	"path/filepath"
+	"regexp"
 	"strings"
 	"testing"
 
@@ -15,6 +16,12 @@ import (
 	"codeberg.org/crowdware/forgecrowdbook/internal/i18n"
 	"codeberg.org/crowdware/forgecrowdbook/internal/model"
 )
+
+var reCSRFToken = regexp.MustCompile(`[0-9a-f]{32}`)
+
+func stripCSRF(s string) string {
+	return reCSRFToken.ReplaceAllString(s, "CSRF_TOKEN")
+}
 
 type sentMail struct {
 	to      string
@@ -50,7 +57,7 @@ func TestLoginAndRegisterUseSameConfirmationMessage(t *testing.T) {
 		"email":        "new@example.com",
 	})
 
-	if loginBody != registerBody {
+	if stripCSRF(loginBody) != stripCSRF(registerBody) {
 		t.Fatalf("expected identical confirmation responses, got\nlogin: %q\nregister: %q", loginBody, registerBody)
 	}
 	if !strings.Contains(loginBody, "Check your email") {

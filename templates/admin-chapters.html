@@ -26,9 +26,9 @@
                 <td>{{ .CreatedAt }}</td>
                 <td>
                     <a href="/dashboard/chapters/{{ .ID }}">{{ t "btn_preview" }}</a>
-                    <form method="POST" action="/admin/chapters/{{ .ID }}/publish" class="inline"><button type="submit">{{ t "btn_publish" }}</button></form>
-                    <form method="POST" action="/admin/chapters/{{ .ID }}/reject" class="inline"><button type="submit">{{ t "btn_reject" }}</button></form>
-                    <form method="POST" action="/admin/chapters/{{ .ID }}/delete" class="inline"><button type="submit">{{ t "btn_delete" }}</button></form>
+                    <form method="POST" action="/admin/chapters/{{ .ID }}/publish" class="inline"><input type="hidden" name="_csrf" value="{{ $.CSRFToken }}"><button type="submit">{{ t "btn_publish" }}</button></form>
+                    <form method="POST" action="/admin/chapters/{{ .ID }}/reject" class="inline"><input type="hidden" name="_csrf" value="{{ $.CSRFToken }}"><button type="submit">{{ t "btn_reject" }}</button></form>
+                    <form method="POST" action="/admin/chapters/{{ .ID }}/delete" class="inline"><input type="hidden" name="_csrf" value="{{ $.CSRFToken }}"><button type="submit">{{ t "btn_delete" }}</button></form>
                 </td>
             </tr>
         {{ end }}

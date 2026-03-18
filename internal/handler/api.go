@@ -3,6 +3,7 @@ package handler
 import (
 	"database/sql"
 	"encoding/json"
+	"log"
 	"net/http"
 	"strconv"
 
@@ -71,8 +72,10 @@ func (h *APIHandler) LikeChapter(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	_ = json.NewEncoder(w).Encode(map[string]any{
+	if err := json.NewEncoder(w).Encode(map[string]any{
 		"count": newCount,
 		"liked": !alreadyLiked,
-	})
+	}); err != nil {
+		log.Printf("LikeChapter encode response: %v", err)
+	}
 }

@@ -13,12 +13,28 @@ import (
 
 	"codeberg.org/crowdware/forgecrowdbook/internal/auth"
 	"codeberg.org/crowdware/forgecrowdbook/internal/config"
+	"codeberg.org/crowdware/forgecrowdbook/internal/csrf"
 	"codeberg.org/crowdware/forgecrowdbook/internal/fetcher"
 	"codeberg.org/crowdware/forgecrowdbook/internal/handler"
 	"codeberg.org/crowdware/forgecrowdbook/internal/i18n"
 	"codeberg.org/crowdware/forgecrowdbook/internal/model"
 	_ "modernc.org/sqlite"
 )
+
+const testCSRFToken = "test-csrf-token-1234567890abcd"
+
+// csrfCookie returns the CSRF cookie for use in tests.
+func csrfCookie() *http.Cookie {
+	return &http.Cookie{Name: csrf.CookieName, Value: testCSRFToken}
+}
+
+// addCSRF adds the CSRF cookie to a request and returns a modified formRequest helper
+// that includes the CSRF field. For requests without a form body, use addCSRFHeader instead.
+func addCSRFHeader(req *http.Request) *http.Request {
+	req.AddCookie(csrfCookie())
+	req.Header.Set(csrf.HeaderName, testCSRFToken)
+	return req
+}
 
 type integrationMailer struct {
 	sent []string
@@ -51,7 +67,7 @@ func TestIntegration(t *testing.T) {
 		Name:          "ForgeCrowdBook",
 		BaseURL:       "http://example.test",
 		Port:          "8090",
-		SessionSecret: "integration-secret",
+		SessionSecret: "integration-secret-for-testing-only-32chars",
 		AdminEmail:    "admin@example.com",
 	}
 
@@ -71,7 +87,7 @@ func TestIntegration(t *testing.T) {
 	}
 	mail := &integrationMailer{}
 
-	mux := buildIntegrationMux(database, cfg, bundle, contentFetcher, mail)
+	mux := csrf.Middleware(buildIntegrationMux(database, cfg, bundle, contentFetcher, mail))
 
 	// TC-01: Register
 	registerRec := httptest.NewRecorder()
@@ -102,7 +118,7 @@ func TestIntegration(t *testing.T) {
 
 	// TC-03: Select book
 	selectRec := httptest.NewRecorder()
-	selectReq := httptest.NewRequest(http.MethodPost, "/dashboard/book/1/select", nil)
+	selectReq := addCSRFHeader(httptest.NewRequest(http.MethodPost, "/dashboard/book/1/select", nil))
 	selectReq.AddCookie(userSession)
 	mux.ServeHTTP(selectRec, selectReq)
 	if selectRec.Code != http.StatusSeeOther || selectRec.Header().Get("Location") != "/dashboard/chapters" {
@@ -168,7 +184,7 @@ func TestIntegration(t *testing.T) {
 
 	// TC-07: Submit chapter
 	submitRec := httptest.NewRecorder()
-	submitReq := httptest.NewRequest(http.MethodPost, "/dashboard/chapters/"+strconv.Itoa(chapterID)+"/submit", nil)
+	submitReq := addCSRFHeader(httptest.NewRequest(http.MethodPost, "/dashboard/chapters/"+strconv.Itoa(chapterID)+"/submit", nil))
 	submitReq.AddCookie(userSession)
 	submitReq.AddCookie(activeBook)
 	mux.ServeHTTP(submitRec, submitReq)
@@ -186,7 +202,7 @@ func TestIntegration(t *testing.T) {
 	adminSession := findCookie(adminRec.Result().Cookies(), "session")
 
 	publishRec := httptest.NewRecorder()
-	publishReq := httptest.NewRequest(http.MethodPost, "/admin/chapters/"+strconv.Itoa(chapterID)+"/publish", nil)
+	publishReq := addCSRFHeader(httptest.NewRequest(http.MethodPost, "/admin/chapters/"+strconv.Itoa(chapterID)+"/publish", nil))
 	publishReq.AddCookie(adminSession)
 	mux.ServeHTTP(publishRec, publishReq)
 	if publishRec.Code != http.StatusSeeOther {
@@ -198,13 +214,13 @@ func TestIntegration(t *testing.T) {
 	}
 
 	// TC-09: Like chapter
-	likeReq1 := httptest.NewRequest(http.MethodPost, "/api/like/"+strconv.Itoa(chapterID), nil)
+	likeReq1 := addCSRFHeader(httptest.NewRequest(http.MethodPost, "/api/like/"+strconv.Itoa(chapterID), nil))
 	likeReq1.RemoteAddr = "198.51.100.10:1111"
 	likeReq1.Header.Set("User-Agent", "IntegrationTest/1")
 	likeRec1 := httptest.NewRecorder()
 	mux.ServeHTTP(likeRec1, likeReq1)
 
-	likeReq2 := httptest.NewRequest(http.MethodPost, "/api/like/"+strconv.Itoa(chapterID), nil)
+	likeReq2 := addCSRFHeader(httptest.NewRequest(http.MethodPost, "/api/like/"+strconv.Itoa(chapterID), nil))
 	likeReq2.RemoteAddr = "198.51.100.10:2222"
 	likeReq2.Header.Set("User-Agent", "IntegrationTest/1")
 	likeRec2 := httptest.NewRecorder()
@@ -338,11 +354,13 @@ func openIntegrationDB(t *testing.T) *sql.DB {
 
 func formRequest(method, path string, values map[string]string) *http.Request {
 	form := url.Values{}
+	form.Set(csrf.FieldName, testCSRFToken)
 	for k, v := range values {
 		form.Set(k, v)
 	}
 	req := httptest.NewRequest(method, path, strings.NewReader(form.Encode()))
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	req.AddCookie(csrfCookie())
 	return req
 }
 

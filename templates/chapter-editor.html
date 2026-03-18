@@ -2,6 +2,7 @@
 <h1>{{ if .IsEdit }}{{ t "editor_edit_title" }}{{ else }}{{ t "editor_new_title" }}{{ end }}</h1>
 <p>{{ t "active_book_label" }}: {{ .ActiveBook.Title }}</p>
 <form method="POST" action="{{ .FormAction }}" class="stack" id="chapter-form">
+    <input type="hidden" name="_csrf" value="{{ .CSRFToken }}">
     <label>{{ t "label_title" }}
         <input type="text" name="title" value="{{ .Chapter.Title }}" required>
     </label>

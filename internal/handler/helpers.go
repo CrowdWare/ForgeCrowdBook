@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"fmt"
 	"html/template"
+	"log"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -13,6 +14,7 @@ import (
 
 	"codeberg.org/crowdware/forgecrowdbook/internal/auth"
 	"codeberg.org/crowdware/forgecrowdbook/internal/config"
+	"codeberg.org/crowdware/forgecrowdbook/internal/csrf"
 	"codeberg.org/crowdware/forgecrowdbook/internal/i18n"
 	"codeberg.org/crowdware/forgecrowdbook/internal/model"
 	"github.com/yuin/goldmark"
@@ -39,6 +41,7 @@ func chapterIDFromPath(path string) (int, error) {
 func renderPage(w http.ResponseWriter, r *http.Request, db *sql.DB, cfg *config.Config, bundle *i18n.Bundle, page string, data map[string]any) {
 	nav, err := baseData(r, cfg, bundle, db)
 	if err != nil {
+		log.Printf("renderPage baseData: %v", err)
 		http.Error(w, "failed to build template data", http.StatusInternalServerError)
 		return
 	}
@@ -47,6 +50,7 @@ func renderPage(w http.ResponseWriter, r *http.Request, db *sql.DB, cfg *config.
 		data = map[string]any{}
 	}
 	data["Nav"] = nav
+	data["CSRFToken"] = csrf.EnsureToken(w, r)
 	if _, ok := data["Title"]; !ok {
 		data["Title"] = "ForgeCrowdBook"
 	}
@@ -63,12 +67,14 @@ func renderPage(w http.ResponseWriter, r *http.Request, db *sql.DB, cfg *config.
 		},
 	}).ParseFiles(paths...)
 	if err != nil {
+		log.Printf("renderPage parse template %q: %v", page, err)
 		http.Error(w, "failed to parse template", http.StatusInternalServerError)
 		return
 	}
 
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
 	if err := tpl.ExecuteTemplate(w, "base", data); err != nil {
+		log.Printf("renderPage execute template %q: %v", page, err)
 		http.Error(w, "failed to render template", http.StatusInternalServerError)
 		return
 	}
@@ -97,8 +103,9 @@ func renderMarkdown(md string) (template.HTML, error) {
 
 func excerpt(text string, max int) string {
 	clean := strings.TrimSpace(text)
-	if len(clean) <= max {
+	runes := []rune(clean)
+	if len(runes) <= max {
 		return clean
 	}
-	return clean[:max]
+	return string(runes[:max])
 }

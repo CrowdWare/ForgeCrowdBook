@@ -7,6 +7,7 @@
     <title>{{ .Title }} - ForgeCrowdBook</title>
     {{ block "head" . }}{{ end }}
     <link rel="stylesheet" href="/static/style.css">
+    <meta name="csrf-token" content="{{ .CSRFToken }}">
 </head>
 <body>
     <nav class="nav">
@@ -18,6 +19,7 @@
             {{ if .Nav.ActiveBook }}<span class="badge">{{ .Nav.ActiveBook.Title }}</span>{{ end }}
             {{ if .Nav.IsAdmin }}<a href="/admin/chapters">{{ t "nav_admin" }}</a>{{ end }}
             <form method="POST" action="/logout" class="inline">
+                <input type="hidden" name="_csrf" value="{{ .CSRFToken }}">
                 <button type="submit">{{ t "nav_logout" }}</button>
             </form>
         {{ else }}
@@ -25,6 +27,7 @@
             <a href="/register">{{ t "nav_register" }}</a>
         {{ end }}
         <form method="POST" action="/lang" class="inline">
+            <input type="hidden" name="_csrf" value="{{ .CSRFToken }}">
             <select name="lang" onchange="this.form.submit()">
                 <option value="de" {{ if eq .Nav.Lang "de" }}selected{{ end }}>🇩🇪 Deutsch</option>
                 <option value="en" {{ if eq .Nav.Lang "en" }}selected{{ end }}>🇬🇧 English</option>

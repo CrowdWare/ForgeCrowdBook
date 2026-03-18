@@ -3,7 +3,7 @@ App {
     base_url: "http://localhost:8090"
     db: "./data/crowdbook-demo.db"
     port: "8090"
-    session_secret: "demo-secret-change-me"
+    session_secret: "demo-secret-change-me-in-production-please"
     admin_email: "admin@example.com"
 
     SMTP {

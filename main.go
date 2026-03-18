@@ -7,6 +7,7 @@ import (
 	"path/filepath"
 
 	"codeberg.org/crowdware/forgecrowdbook/internal/config"
+	"codeberg.org/crowdware/forgecrowdbook/internal/csrf"
 	"codeberg.org/crowdware/forgecrowdbook/internal/db"
 	"codeberg.org/crowdware/forgecrowdbook/internal/fetcher"
 	"codeberg.org/crowdware/forgecrowdbook/internal/handler"
@@ -93,5 +94,5 @@ func main() {
 
 	addr := ":" + cfg.Port
 	fmt.Printf("%s version %s listening on %s\n", cfg.Name, version, addr)
-	log.Fatal(http.ListenAndServe(addr, mux))
+	log.Fatal(http.ListenAndServe(addr, csrf.Middleware(mux)))
 }

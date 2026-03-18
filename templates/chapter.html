@@ -20,7 +20,11 @@
 <script>
 document.getElementById("like-btn")?.addEventListener("click", async function () {
   const id = this.dataset.chapterId;
-  const res = await fetch("/api/like/" + id, { method: "POST" });
+  const csrf = document.querySelector('meta[name="csrf-token"]')?.content ?? "";
+  const res = await fetch("/api/like/" + id, {
+    method: "POST",
+    headers: { "X-CSRF-Token": csrf },
+  });
   if (!res.ok) return;
   const data = await res.json();
   document.getElementById("like-count").textContent = "{{ t "label_likes" }}: " + data.count;

@@ -6,6 +6,7 @@
             <h2>{{ .Title }}</h2>
             <p>{{ .Description }}</p>
             <form method="POST" action="/dashboard/book/{{ .ID }}/select">
+                <input type="hidden" name="_csrf" value="{{ $.CSRFToken }}">
                 <button type="submit">
                     {{ if and $.ActiveBook (eq $.ActiveBook.ID .ID) }}{{ t "dashboard_selected" }}{{ else }}{{ t "dashboard_select" }}{{ end }}
                 </button>

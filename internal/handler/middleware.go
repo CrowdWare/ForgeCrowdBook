@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"fmt"
 	"net/http"
+	"net/url"
 	"strconv"
 	"strings"
 
@@ -89,11 +90,15 @@ func SetLang(w http.ResponseWriter, r *http.Request) {
 		Value:    lang,
 		Path:     "/",
 		SameSite: http.SameSiteLaxMode,
+		MaxAge:   365 * 24 * 60 * 60,
 	})
 
-	target := r.Referer()
-	if strings.TrimSpace(target) == "" {
-		target = "/"
+	// Only redirect to a relative path to prevent open redirect via Referer.
+	target := "/"
+	if ref := r.Referer(); ref != "" {
+		if u, err := url.Parse(ref); err == nil && u.Path != "" {
+			target = u.RequestURI()
+		}
 	}
 	http.Redirect(w, r, target, http.StatusSeeOther)
 }
