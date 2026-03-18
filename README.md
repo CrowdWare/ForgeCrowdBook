@@ -52,10 +52,14 @@ Non-sensitive settings (host, port, DB path, SMTP host) go directly into `app.sm
 
 ### Local Setup
 
-**1. Set secrets in your shell (or a `.envrc` file):**
+**1. Generate a session secret and set secrets in your shell (or a `.envrc` file):**
 
 ```bash
-export FCB_SESSION_SECRET="$(openssl rand -hex 32)"
+# Generate a secure random secret (pick one):
+openssl rand -hex 32          # macOS / Linux with OpenSSL
+python3 -c "import secrets; print(secrets.token_hex(32))"  # Python 3
+
+export FCB_SESSION_SECRET="<paste-generated-secret-here>"
 export FCB_ADMIN_EMAIL="you@example.com"
 export FCB_SMTP_USER="your-smtp-user"
 export FCB_SMTP_PASS="your-smtp-password"
