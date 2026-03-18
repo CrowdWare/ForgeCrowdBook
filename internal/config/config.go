@@ -75,8 +75,22 @@ func LoadConfig(path string) (*Config, error) {
 		}
 	}
 
+	// Environment variables override SML values for sensitive fields.
+	if v := os.Getenv("FCB_SESSION_SECRET"); v != "" {
+		cfg.SessionSecret = v
+	}
+	if v := os.Getenv("FCB_ADMIN_EMAIL"); v != "" {
+		cfg.AdminEmail = v
+	}
+	if v := os.Getenv("FCB_SMTP_USER"); v != "" {
+		cfg.SMTP.User = v
+	}
+	if v := os.Getenv("FCB_SMTP_PASS"); v != "" {
+		cfg.SMTP.Pass = v
+	}
+
 	if len(cfg.SessionSecret) < 32 {
-		return nil, fmt.Errorf("session_secret must be at least 32 characters long")
+		return nil, fmt.Errorf("session_secret must be at least 32 characters long (or set FCB_SESSION_SECRET)")
 	}
 
 	return cfg, nil

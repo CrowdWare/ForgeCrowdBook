@@ -31,21 +31,37 @@ The app starts on `http://localhost:8090` by default.
 
 ## Configuration
 
-Create `app.sml` from `app-demo.sml`.
-
-For quick local testing you can also use the demo file:
+Create `app.sml` from the template:
 
 ```bash
 cp app-demo.sml app.sml
 ```
 
-or rename it:
+Non-sensitive settings (host, port, DB path, SMTP host) go directly into `app.sml`. **Secrets are never stored in the file** — they are passed via environment variables instead.
+
+### Environment Variables
+
+| Variable | Description | Required |
+|---|---|---|
+| `FCB_SESSION_SECRET` | HMAC secret for session cookies (min. 32 chars) | yes |
+| `FCB_ADMIN_EMAIL` | E-mail address of the admin account | yes |
+| `FCB_SMTP_USER` | SMTP login username | yes (for mail) |
+| `FCB_SMTP_PASS` | SMTP login password | yes (for mail) |
+
+`app.sml` is listed in `.gitignore` and will never be committed. `app-demo.sml` is the safe-to-commit template with all secrets left blank.
+
+### Local Setup
+
+**1. Set secrets in your shell (or a `.envrc` file):**
 
 ```bash
-mv app-demo.sml app.sml
+export FCB_SESSION_SECRET="$(openssl rand -hex 32)"
+export FCB_ADMIN_EMAIL="you@example.com"
+export FCB_SMTP_USER="your-smtp-user"
+export FCB_SMTP_PASS="your-smtp-password"
 ```
 
-Minimal local setup:
+**2. Edit `app.sml` — non-secret values only:**
 
 ```sml
 App {
@@ -53,29 +69,22 @@ App {
     base_url: "http://localhost:8090"
     db: "./data/crowdbook.db"
     port: "8090"
-    session_secret: "replace-with-a-long-random-secret"
-    admin_email: "admin@example.com"
-}
-```
-
-With SMTP (recommended for real Magic-Link login mails):
-
-```sml
-App {
-    name: "ForgeCrowdBook"
-    base_url: "http://localhost:8090"
-    db: "./data/crowdbook.db"
-    port: "8090"
-    session_secret: "replace-with-a-long-random-secret"
-    admin_email: "admin@example.com"
+    session_secret: ""
+    admin_email: ""
     SMTP {
         host: "smtp.example.com"
         port: "587"
-        user: "smtp-user"
-        pass: "smtp-password"
+        user: ""
+        pass: ""
         from: "noreply@example.com"
     }
 }
+```
+
+**3. Start:**
+
+```bash
+./run.sh start
 ```
 
 ## Running Tests
