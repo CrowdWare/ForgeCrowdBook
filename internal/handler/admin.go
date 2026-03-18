@@ -2,7 +2,6 @@ package handler
 
 import (
 	"database/sql"
-	"fmt"
 	"net/http"
 	"strconv"
 	"strings"
@@ -72,8 +71,17 @@ func (h *AdminHandler) Chapters(w http.ResponseWriter, r *http.Request) {
 	}
 	defer rows.Close()
 
-	var b strings.Builder
-	b.WriteString("<html><body><h1>Admin Chapters</h1>")
+	type AdminChapterRow struct {
+		ID        int
+		Title     string
+		Author    string
+		Book      string
+		PathLabel string
+		Status    string
+		LikeCount int
+		CreatedAt string
+	}
+	rowsData := []AdminChapterRow{}
 	for rows.Next() {
 		var (
 			id        int
@@ -89,20 +97,23 @@ func (h *AdminHandler) Chapters(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, "failed to scan chapter", http.StatusInternalServerError)
 			return
 		}
-		fmt.Fprintf(
-			&b,
-			`<article><h2>%s</h2><p>%s | %s | %s</p><p>Status: %s | Likes: %d | Created: %s</p><p>
-<a href="/dashboard/chapters/%d">Preview</a>
-<form method="POST" action="/admin/chapters/%d/publish"><button type="submit">Publish</button></form>
-<form method="POST" action="/admin/chapters/%d/reject"><button type="submit">Reject</button></form>
-<form method="POST" action="/admin/chapters/%d/delete"><button type="submit">Delete</button></form>
-</p></article>`,
-			safeHTML(title), safeHTML(author), safeHTML(book), safeHTML(pathLabel), safeHTML(state), likeCount, createdAt.Format(time.RFC3339),
-			id, id, id, id,
-		)
+		rowsData = append(rowsData, AdminChapterRow{
+			ID:        id,
+			Title:     title,
+			Author:    author,
+			Book:      book,
+			PathLabel: pathLabel,
+			Status:    state,
+			LikeCount: likeCount,
+			CreatedAt: createdAt.Format(time.RFC3339),
+		})
 	}
-	b.WriteString("</body></html>")
-	fmt.Fprint(w, b.String())
+	renderPage(w, r, h.DB, h.Config, h.I18N, "admin-chapters", map[string]any{
+		"Title":    "Admin Chapters",
+		"Rows":     rowsData,
+		"Filter":   status,
+		"DateFrom": dateFrom,
+	})
 }
 
 func (h *AdminHandler) Publish(w http.ResponseWriter, r *http.Request) {
@@ -156,8 +167,15 @@ func (h *AdminHandler) Users(w http.ResponseWriter, r *http.Request) {
 	}
 	defer rows.Close()
 
-	var b strings.Builder
-	b.WriteString("<html><body><h1>Admin Users</h1>")
+	type AdminUserRow struct {
+		ID         int
+		Name       string
+		Email      string
+		Status     string
+		ChapterCnt int
+		CreatedAt  string
+	}
+	data := []AdminUserRow{}
 	for rows.Next() {
 		var (
 			id         int
@@ -171,14 +189,19 @@ func (h *AdminHandler) Users(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, "failed to scan users", http.StatusInternalServerError)
 			return
 		}
-		fmt.Fprintf(
-			&b,
-			`<article><h2>%s</h2><p>%s</p><p>Status: %s | Chapters: %d | Joined: %s</p><form method="POST" action="/admin/users/%d/ban"><button type="submit">Ban</button></form></article>`,
-			safeHTML(name), safeHTML(email), safeHTML(status), chapterCnt, createdAt.Format(time.RFC3339), id,
-		)
+		data = append(data, AdminUserRow{
+			ID:         id,
+			Name:       name,
+			Email:      email,
+			Status:     status,
+			ChapterCnt: chapterCnt,
+			CreatedAt:  createdAt.Format(time.RFC3339),
+		})
 	}
-	b.WriteString("</body></html>")
-	fmt.Fprint(w, b.String())
+	renderPage(w, r, h.DB, h.Config, h.I18N, "admin-users", map[string]any{
+		"Title": "Admin Users",
+		"Rows":  data,
+	})
 }
 
 func (h *AdminHandler) BanUser(w http.ResponseWriter, r *http.Request) {

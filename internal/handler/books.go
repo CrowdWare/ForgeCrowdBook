@@ -2,7 +2,6 @@ package handler
 
 import (
 	"database/sql"
-	"fmt"
 	"html/template"
 	"net/http"
 	"strings"
@@ -47,14 +46,10 @@ func (h *BooksHandler) ListBooks(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var b strings.Builder
-	b.WriteString("<html><body><h1>Books</h1>")
-	for _, book := range books {
-		fmt.Fprintf(&b, `<article><h2><a href="/books/%s">%s</a></h2><p>%s</p></article>`,
-			safeHTML(book.Slug), safeHTML(book.Title), safeHTML(book.Description))
-	}
-	b.WriteString("</body></html>")
-	fmt.Fprint(w, b.String())
+	renderPage(w, r, h.DB, h.Config, h.I18N, "books", map[string]any{
+		"Title": "Books",
+		"Books": books,
+	})
 }
 
 func (h *BooksHandler) BookPage(w http.ResponseWriter, r *http.Request) {
@@ -85,27 +80,36 @@ func (h *BooksHandler) BookPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var b strings.Builder
-	fmt.Fprintf(&b, "<html><body><h1>%s</h1>", safeHTML(book.Title))
+	type ChapterCard struct {
+		ID        int
+		Title     string
+		Author    string
+		PathLabel string
+		Excerpt   string
+		LikeCount int
+		Slug      string
+	}
+	cards := make([]ChapterCard, 0, len(chapters))
 	for _, chapter := range chapters {
 		preview := "Content unavailable."
 		if md, err := h.Fetcher.FetchMarkdown(chapter.SourceURL); err == nil {
 			preview = excerpt(md, 150)
 		}
-		fmt.Fprintf(
-			&b,
-			`<article><h2>%s</h2><p>By %s</p><p>Path: %s</p><p>%s</p><p>Likes: %d</p><p><a href="/books/%s/%s">Read</a></p></article>`,
-			safeHTML(chapter.Title),
-			safeHTML(chapter.AuthorName),
-			safeHTML(chapter.PathLabel),
-			safeHTML(preview),
-			chapter.LikeCount,
-			safeHTML(book.Slug),
-			safeHTML(chapter.Slug),
-		)
+		cards = append(cards, ChapterCard{
+			ID:        chapter.ID,
+			Title:     chapter.Title,
+			Author:    chapter.AuthorName,
+			PathLabel: chapter.PathLabel,
+			Excerpt:   preview,
+			LikeCount: chapter.LikeCount,
+			Slug:      chapter.Slug,
+		})
 	}
-	b.WriteString("</body></html>")
-	fmt.Fprint(w, b.String())
+	renderPage(w, r, h.DB, h.Config, h.I18N, "book", map[string]any{
+		"Title":    book.Title,
+		"Book":     book,
+		"Chapters": cards,
+	})
 }
 
 func (h *BooksHandler) ChapterPage(w http.ResponseWriter, r *http.Request) {
@@ -152,43 +156,16 @@ func (h *BooksHandler) ChapterPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	ogDesc := safeHTML(excerpt(md, 150))
-	shareURL := strings.TrimRight(h.Config.BaseURL, "/") + r.URL.Path
-	w.Header().Set("Content-Type", "text/html; charset=utf-8")
-
-	const tpl = `<html><head>
-<meta property="og:title" content="{{.Title}}">
-<meta property="og:description" content="{{.Description}}">
-</head><body>
-<p><a href="/books/{{.BookSlug}}">Back to book</a></p>
-<h1>{{.Title}}</h1>
-<div>{{.Content}}</div>
-<form method="POST" action="/api/like/{{.ChapterID}}"><button type="submit">Like</button></form>
-<p><a href="https://t.me/share/url?url={{.ShareURL}}">Telegram</a> |
-<a href="https://wa.me/?text={{.ShareURL}}">WhatsApp</a> |
-<a href="https://www.facebook.com/sharer/sharer.php?u={{.ShareURL}}">Facebook</a> |
-<a href="https://x.com/intent/post?url={{.ShareURL}}">X</a></p>
-<p>Copy link: {{.ShareURL}}</p>
-</body></html>`
-
-	data := struct {
-		BookSlug    string
-		Title       string
-		Description string
-		Content     template.HTML
-		ChapterID   int
-		ShareURL    string
-	}{
-		BookSlug:    book.Slug,
-		Title:       chapter.Title,
-		Description: ogDesc,
-		Content:     compiled,
-		ChapterID:   chapter.ID,
-		ShareURL:    shareURL,
-	}
-
-	t := template.Must(template.New("chapter").Parse(tpl))
-	_ = t.Execute(w, data)
+	renderPage(w, r, h.DB, h.Config, h.I18N, "chapter", map[string]any{
+		"Title":       chapter.Title,
+		"Book":        book,
+		"Chapter":     chapter,
+		"Rendered":    template.HTML(compiled),
+		"OGTitle":     chapter.Title,
+		"OGDesc":      excerpt(md, 150),
+		"ShareURL":    strings.TrimRight(h.Config.BaseURL, "/") + r.URL.Path,
+		"ChapterSlug": chapter.Slug,
+	})
 }
 
 func pathPart(path string, idx int) string {

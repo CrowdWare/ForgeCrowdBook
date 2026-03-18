@@ -1,0 +1,20 @@
+{{ define "content" }}
+<h1>Welcome, {{ .User.DisplayName }}</h1>
+<div class="grid">
+    {{ range .Books }}
+        <article class="card">
+            <h2>{{ .Title }}</h2>
+            <p>{{ .Description }}</p>
+            <form method="POST" action="/dashboard/book/{{ .ID }}/select">
+                <button type="submit">
+                    {{ if and $.ActiveBook (eq $.ActiveBook.ID .ID) }}Selected{{ else }}Select{{ end }}
+                </button>
+            </form>
+        </article>
+    {{ end }}
+</div>
+{{ if .ActiveBook }}
+    <p><a href="/dashboard/chapters">My Chapters</a></p>
+{{ end }}
+{{ end }}
+{{ template "base" . }}

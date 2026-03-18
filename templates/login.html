@@ -1,0 +1,10 @@
+{{ define "content" }}
+<h1>Login</h1>
+<form method="POST" action="/login" class="stack">
+    <label>Email
+        <input type="email" name="email" required>
+    </label>
+    <button type="submit">Send login link</button>
+</form>
+{{ end }}
+{{ template "base" . }}

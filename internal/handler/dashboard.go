@@ -2,10 +2,8 @@ package handler
 
 import (
 	"database/sql"
-	"fmt"
 	"net/http"
 	"strconv"
-	"strings"
 
 	"codeberg.org/crowdware/forgecrowdbook/internal/config"
 	"codeberg.org/crowdware/forgecrowdbook/internal/i18n"
@@ -54,27 +52,12 @@ func (h *DashboardHandler) Dashboard(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var b strings.Builder
-	fmt.Fprintf(&b, "<html><body><h1>Welcome, %s</h1>", safeHTML(user.DisplayName))
-	for _, book := range books {
-		selected := ""
-		if active != nil && active.ID == book.ID {
-			selected = " (selected)"
-		}
-		fmt.Fprintf(
-			&b,
-			`<article><h2>%s%s</h2><p>%s</p><form method="POST" action="/dashboard/book/%d/select"><button type="submit">Select</button></form></article>`,
-			safeHTML(book.Title),
-			selected,
-			safeHTML(book.Description),
-			book.ID,
-		)
-	}
-	if active != nil {
-		b.WriteString(`<p><a href="/dashboard/chapters">My Chapters</a></p>`)
-	}
-	b.WriteString("</body></html>")
-	fmt.Fprint(w, b.String())
+	renderPage(w, r, h.DB, h.Config, h.I18N, "dashboard", map[string]any{
+		"Title":      "Dashboard",
+		"User":       user,
+		"Books":      books,
+		"ActiveBook": active,
+	})
 }
 
 func (h *DashboardHandler) SelectBook(w http.ResponseWriter, r *http.Request) {

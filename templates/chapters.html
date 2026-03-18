@@ -1,0 +1,22 @@
+{{ define "content" }}
+<h1>My Chapters</h1>
+<p>Active book: {{ .Book.Title }}</p>
+<p><a class="btn" href="/dashboard/chapters/new">New Chapter</a></p>
+<div class="grid">
+    {{ range .Rows }}
+        <article class="card chapter">
+            <h2>{{ .Title }}</h2>
+            <p>{{ .PathLabel }}</p>
+            <p><span class="status {{ .Status }}">{{ .Status }}</span></p>
+            <p>{{ .SourceShort }}</p>
+            <p>
+                <a href="/dashboard/chapters/{{ .ID }}">Preview</a>
+                <a href="/dashboard/chapters/{{ .ID }}/edit">Edit</a>
+            </p>
+        </article>
+    {{ else }}
+        <p>No chapters yet.</p>
+    {{ end }}
+</div>
+{{ end }}
+{{ template "base" . }}

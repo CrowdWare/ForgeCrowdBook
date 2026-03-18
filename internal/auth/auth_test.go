@@ -3,11 +3,11 @@ package auth
 import (
 	"database/sql"
 	"errors"
-	"path/filepath"
 	"regexp"
 	"testing"
+	"time"
 
-	"codeberg.org/crowdware/forgecrowdbook/internal/db"
+	_ "modernc.org/sqlite"
 )
 
 func TestGenerateTokenFormat(t *testing.T) {
@@ -20,6 +20,14 @@ func TestGenerateTokenFormat(t *testing.T) {
 	}
 	if !regexp.MustCompile(`^[0-9a-f]{64}$`).MatchString(token) {
 		t.Fatalf("token is not lowercase hex: %q", token)
+	}
+
+	other, err := GenerateToken()
+	if err != nil {
+		t.Fatalf("GenerateToken second call failed: %v", err)
+	}
+	if token == other {
+		t.Fatal("expected unique token values")
 	}
 }
 
@@ -62,6 +70,62 @@ func TestValidateTokenSingleUse(t *testing.T) {
 	}
 }
 
+func TestCreateMagicTokenStoresAndExpiresInAbout15Minutes(t *testing.T) {
+	database := openTestDB(t)
+
+	token, err := CreateMagicToken(database, "expires@example.com")
+	if err != nil {
+		t.Fatalf("CreateMagicToken failed: %v", err)
+	}
+
+	var (
+		storedToken string
+		expiresAt   time.Time
+	)
+	if err := database.QueryRow(`
+		SELECT token, expires_at
+		FROM magic_tokens
+		WHERE email = ?
+		ORDER BY id DESC
+		LIMIT 1;
+	`, "expires@example.com").Scan(&storedToken, &expiresAt); err != nil {
+		t.Fatalf("query stored token: %v", err)
+	}
+	if storedToken != token {
+		t.Fatalf("stored token mismatch: got %q want %q", storedToken, token)
+	}
+
+	remaining := time.Until(expiresAt)
+	if remaining < 13*time.Minute || remaining > 16*time.Minute {
+		t.Fatalf("expected ~15m ttl, got %s", remaining)
+	}
+}
+
+func TestValidateTokenRejectsUnknownToken(t *testing.T) {
+	database := openTestDB(t)
+
+	_, err := ValidateToken(database, "does-not-exist")
+	if !errors.Is(err, ErrInvalidToken) {
+		t.Fatalf("expected ErrInvalidToken, got: %v", err)
+	}
+}
+
+func TestValidateTokenRejectsAlreadyUsedToken(t *testing.T) {
+	database := openTestDB(t)
+
+	if _, err := database.Exec(`
+		INSERT INTO magic_tokens (email, token, expires_at, used, created_at)
+		VALUES ('used@example.com', 'used-token', datetime('now', '+15 minutes'), 1, datetime('now'));
+	`); err != nil {
+		t.Fatalf("seed used token failed: %v", err)
+	}
+
+	_, err := ValidateToken(database, "used-token")
+	if !errors.Is(err, ErrInvalidToken) {
+		t.Fatalf("expected ErrInvalidToken, got: %v", err)
+	}
+}
+
 func TestCreateMagicTokenRateLimit(t *testing.T) {
 	database := openTestDB(t)
 
@@ -81,11 +145,24 @@ func TestCreateMagicTokenRateLimit(t *testing.T) {
 func openTestDB(t *testing.T) *sql.DB {
 	t.Helper()
 
-	path := filepath.Join(t.TempDir(), "test.db")
-	database, err := db.Open(path)
+	database, err := sql.Open("sqlite", "file::memory:?cache=shared")
 	if err != nil {
-		t.Fatalf("db.Open failed: %v", err)
+		t.Fatalf("open sqlite failed: %v", err)
 	}
 	t.Cleanup(func() { _ = database.Close() })
+
+	if _, err := database.Exec(`
+		CREATE TABLE IF NOT EXISTS magic_tokens (
+			id INTEGER PRIMARY KEY AUTOINCREMENT,
+			email TEXT NOT NULL,
+			token TEXT NOT NULL UNIQUE,
+			expires_at DATETIME NOT NULL,
+			used INTEGER NOT NULL DEFAULT 0,
+			created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+		);
+	`); err != nil {
+		t.Fatalf("create schema failed: %v", err)
+	}
+
 	return database
 }

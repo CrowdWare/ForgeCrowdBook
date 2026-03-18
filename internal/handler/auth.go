@@ -3,7 +3,6 @@ package handler
 import (
 	"database/sql"
 	"errors"
-	"fmt"
 	"net/http"
 	"net/mail"
 	"strings"
@@ -39,8 +38,7 @@ func (h *AuthHandler) LoginPage(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
 		return
 	}
-
-	fmt.Fprint(w, `<html><body><h1>Login</h1><form method="POST" action="/login"><input type="email" name="email" required><button type="submit">Send login link</button></form></body></html>`)
+	renderPage(w, r, h.DB, h.Config, h.I18N, "login", map[string]any{"Title": "Login"})
 }
 
 func (h *AuthHandler) RegisterPage(w http.ResponseWriter, r *http.Request) {
@@ -49,7 +47,7 @@ func (h *AuthHandler) RegisterPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	fmt.Fprint(w, `<html><body><h1>Register</h1><form method="POST" action="/register"><input type="text" name="display_name" required><input type="email" name="email" required><button type="submit">Register</button></form></body></html>`)
+	renderPage(w, r, h.DB, h.Config, h.I18N, "register", map[string]any{"Title": "Register"})
 }
 
 func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
@@ -92,7 +90,7 @@ func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	h.renderConfirm(w, lang)
+	h.renderConfirm(w, r, lang)
 }
 
 func (h *AuthHandler) Register(w http.ResponseWriter, r *http.Request) {
@@ -140,7 +138,7 @@ func (h *AuthHandler) Register(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	h.renderConfirm(w, lang)
+	h.renderConfirm(w, r, lang)
 }
 
 func (h *AuthHandler) Auth(w http.ResponseWriter, r *http.Request) {
@@ -151,14 +149,14 @@ func (h *AuthHandler) Auth(w http.ResponseWriter, r *http.Request) {
 
 	token := strings.TrimSpace(r.URL.Query().Get("token"))
 	if token == "" {
-		h.renderAuthError(w, http.StatusBadRequest, "Missing token.")
+		h.renderAuthError(w, r, http.StatusBadRequest, "Missing token.")
 		return
 	}
 
 	email, err := auth.ValidateToken(h.DB, token)
 	if err != nil {
 		if errors.Is(err, auth.ErrInvalidToken) {
-			h.renderAuthError(w, http.StatusUnauthorized, "This login link is invalid or has expired.")
+			h.renderAuthError(w, r, http.StatusUnauthorized, "This login link is invalid or has expired.")
 			return
 		}
 		http.Error(w, "failed to validate login link", http.StatusInternalServerError)
@@ -171,7 +169,7 @@ func (h *AuthHandler) Auth(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if user == nil || user.Status == "banned" {
-		h.renderAuthError(w, http.StatusForbidden, "This account is not allowed to sign in.")
+		h.renderAuthError(w, r, http.StatusForbidden, "This account is not allowed to sign in.")
 		return
 	}
 
@@ -187,14 +185,19 @@ func (h *AuthHandler) authLink(token string) string {
 	return base + "/auth?token=" + token
 }
 
-func (h *AuthHandler) renderConfirm(w http.ResponseWriter, lang string) {
-	message := h.I18N.T(lang, "msg_check_email")
-	fmt.Fprintf(w, "<html><body><h1>Check your email</h1><p>%s</p></body></html>", message)
+func (h *AuthHandler) renderConfirm(w http.ResponseWriter, r *http.Request, lang string) {
+	renderPage(w, r, h.DB, h.Config, h.I18N, "confirm", map[string]any{
+		"Title":   "Check your email",
+		"Message": h.I18N.T(lang, "msg_check_email"),
+	})
 }
 
-func (h *AuthHandler) renderAuthError(w http.ResponseWriter, code int, message string) {
+func (h *AuthHandler) renderAuthError(w http.ResponseWriter, r *http.Request, code int, message string) {
 	w.WriteHeader(code)
-	fmt.Fprintf(w, `<html><body><h1>Login link error</h1><p>%s</p><p><a href="/login">Try again</a></p></body></html>`, message)
+	renderPage(w, r, h.DB, h.Config, h.I18N, "auth-error", map[string]any{
+		"Title":   "Login link error",
+		"Message": message,
+	})
 }
 
 func isValidEmail(email string) bool {

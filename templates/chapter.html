@@ -1,0 +1,33 @@
+{{ define "head" }}
+<meta property="og:title" content="{{ .OGTitle }}">
+<meta property="og:description" content="{{ .OGDesc }}">
+{{ end }}
+{{ define "content" }}
+<p><a href="/books/{{ .Book.Slug }}">Back to book</a></p>
+<h1>{{ .Chapter.Title }}</h1>
+<div class="markdown">{{ .Rendered }}</div>
+<button class="like-btn" data-chapter-id="{{ .Chapter.ID }}" id="like-btn">Like</button>
+<p id="like-count">Likes: {{ .Chapter.LikeCount }}</p>
+<div class="share">
+    <a href="https://t.me/share/url?url={{ .ShareURL }}">Telegram</a>
+    <a href="https://wa.me/?text={{ .ShareURL }}">WhatsApp</a>
+    <a href="https://www.facebook.com/sharer/sharer.php?u={{ .ShareURL }}">Facebook</a>
+    <a href="https://x.com/intent/post?url={{ .ShareURL }}">X</a>
+    <button id="copy-link" data-url="{{ .ShareURL }}">Copy Link</button>
+</div>
+{{ end }}
+{{ define "scripts" }}
+<script>
+document.getElementById("like-btn")?.addEventListener("click", async function () {
+  const id = this.dataset.chapterId;
+  const res = await fetch("/api/like/" + id, { method: "POST" });
+  if (!res.ok) return;
+  const data = await res.json();
+  document.getElementById("like-count").textContent = "Likes: " + data.count;
+});
+document.getElementById("copy-link")?.addEventListener("click", function () {
+  navigator.clipboard.writeText(this.dataset.url);
+});
+</script>
+{{ end }}
+{{ template "base" . }}

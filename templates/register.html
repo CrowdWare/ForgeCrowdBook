@@ -1,0 +1,13 @@
+{{ define "content" }}
+<h1>Register</h1>
+<form method="POST" action="/register" class="stack">
+    <label>Display name
+        <input type="text" name="display_name" required>
+    </label>
+    <label>Email
+        <input type="email" name="email" required>
+    </label>
+    <button type="submit">Register</button>
+</form>
+{{ end }}
+{{ template "base" . }}

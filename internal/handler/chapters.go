@@ -3,8 +3,8 @@ package handler
 import (
 	"database/sql"
 	"fmt"
+	"html/template"
 	"net/http"
-	"strconv"
 	"strings"
 
 	"codeberg.org/crowdware/forgecrowdbook/internal/config"
@@ -45,9 +45,14 @@ func (h *ChaptersHandler) List(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var b strings.Builder
-	fmt.Fprintf(&b, "<html><body><h1>My Chapters for %s</h1>", safeHTML(activeBook.Title))
-	b.WriteString(`<p><a href="/dashboard/chapters/new">New Chapter</a></p>`)
+	type ChapterRow struct {
+		ID          int
+		Title       string
+		PathLabel   string
+		Status      string
+		SourceShort string
+	}
+	rows := []ChapterRow{}
 	for _, chapter := range chapters {
 		if chapter.BookID != activeBook.ID {
 			continue
@@ -56,19 +61,20 @@ func (h *ChaptersHandler) List(w http.ResponseWriter, r *http.Request) {
 		if len(source) > 60 {
 			source = source[:60] + "..."
 		}
-		fmt.Fprintf(
-			&b,
-			`<article><h2>%s</h2><p>%s</p><p>Status: %s</p><p>%s</p><p><a href="/dashboard/chapters/%d">Preview</a> | <a href="/dashboard/chapters/%d/edit">Edit</a></p></article>`,
-			safeHTML(chapter.Title),
-			safeHTML(chapter.PathLabel),
-			safeHTML(chapter.Status),
-			safeHTML(source),
-			chapter.ID,
-			chapter.ID,
-		)
+		rows = append(rows, ChapterRow{
+			ID:          chapter.ID,
+			Title:       chapter.Title,
+			PathLabel:   chapter.PathLabel,
+			Status:      chapter.Status,
+			SourceShort: source,
+		})
 	}
-	b.WriteString("</body></html>")
-	fmt.Fprint(w, b.String())
+	renderPage(w, r, h.DB, h.Config, h.I18N, "chapters", map[string]any{
+		"Title":   "My Chapters",
+		"Book":    activeBook,
+		"Rows":    rows,
+		"HasBook": activeBook != nil,
+	})
 }
 
 func (h *ChaptersHandler) New(w http.ResponseWriter, r *http.Request) {
@@ -81,7 +87,7 @@ func (h *ChaptersHandler) New(w http.ResponseWriter, r *http.Request) {
 	if !ok {
 		return
 	}
-	h.renderChapterForm(w, activeBook, nil)
+	h.renderChapterForm(w, r, activeBook, nil)
 }
 
 func (h *ChaptersHandler) PreviewSource(w http.ResponseWriter, r *http.Request) {
@@ -162,20 +168,15 @@ func (h *ChaptersHandler) PreviewPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	content := `<p>Content unavailable.</p>`
+	content := "<p>Content unavailable.</p>"
 	if html, err := h.Fetcher.FetchHTML(chapter.SourceURL); err == nil {
 		content = html
 	}
-
-	var b strings.Builder
-	fmt.Fprintf(&b, "<html><body><h1>%s</h1><p>Path: %s</p><p>Status: %s</p>", safeHTML(chapter.Title), safeHTML(chapter.PathLabel), safeHTML(chapter.Status))
-	fmt.Fprintf(&b, `<p><a href="/dashboard/chapters/%d/edit">Edit</a></p>`, chapter.ID)
-	if chapter.Status == "draft" {
-		fmt.Fprintf(&b, `<form method="POST" action="/dashboard/chapters/%d/submit"><button type="submit">Submit for Review</button></form>`, chapter.ID)
-	}
-	fmt.Fprintf(&b, `<form method="POST" action="/dashboard/chapters/%d/refresh"><button type="submit">Refresh Content</button></form>`, chapter.ID)
-	b.WriteString(`<div class="preview">` + content + `</div></body></html>`)
-	fmt.Fprint(w, b.String())
+	renderPage(w, r, h.DB, h.Config, h.I18N, "chapter-preview", map[string]any{
+		"Title":   chapter.Title,
+		"Chapter": chapter,
+		"Content": template.HTML(content),
+	})
 }
 
 func (h *ChaptersHandler) Edit(w http.ResponseWriter, r *http.Request) {
@@ -193,7 +194,7 @@ func (h *ChaptersHandler) Edit(w http.ResponseWriter, r *http.Request) {
 	if !ok {
 		return
 	}
-	h.renderChapterForm(w, activeBook, chapter)
+	h.renderChapterForm(w, r, activeBook, chapter)
 }
 
 func (h *ChaptersHandler) Update(w http.ResponseWriter, r *http.Request) {
@@ -272,7 +273,7 @@ func (h *ChaptersHandler) Refresh(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, fmt.Sprintf("/dashboard/chapters/%d", chapter.ID), http.StatusSeeOther)
 }
 
-func (h *ChaptersHandler) renderChapterForm(w http.ResponseWriter, activeBook *model.Book, chapter *model.Chapter) {
+func (h *ChaptersHandler) renderChapterForm(w http.ResponseWriter, r *http.Request, activeBook *model.Book, chapter *model.Chapter) {
 	title := ""
 	pathLabel := ""
 	sourceURL := ""
@@ -286,27 +287,18 @@ func (h *ChaptersHandler) renderChapterForm(w http.ResponseWriter, activeBook *m
 		button = "Save"
 	}
 
-	var b strings.Builder
-	fmt.Fprintf(&b, "<html><body><h1>Chapter Form</h1><p>Active book: %s</p>", safeHTML(activeBook.Title))
-	fmt.Fprintf(
-		&b,
-		`<form method="POST" action="%s">
-<label>Title <input type="text" name="title" value="%s" required></label><br>
-<label>Path Label <input type="text" name="path_label" value="%s"></label><br>
-<label>Source URL <input type="url" name="source_url" value="%s" required></label><br>
-<button type="submit">%s</button></form>
-<form method="POST" action="/dashboard/preview">
-<input type="url" name="source_url" value="%s" required>
-<button type="submit">Load Preview</button></form>
-</body></html>`,
-		safeHTML(action),
-		safeHTML(title),
-		safeHTML(pathLabel),
-		safeHTML(sourceURL),
-		safeHTML(button),
-		safeHTML(sourceURL),
-	)
-	fmt.Fprint(w, b.String())
+	renderPage(w, r, h.DB, h.Config, h.I18N, "chapter-editor", map[string]any{
+		"Title":      "Chapter Editor",
+		"ActiveBook": activeBook,
+		"Chapter": map[string]any{
+			"Title":     title,
+			"PathLabel": pathLabel,
+			"SourceURL": sourceURL,
+		},
+		"FormAction": action,
+		"ButtonText": button,
+		"IsEdit":     chapter != nil,
+	})
 }
 
 func (h *ChaptersHandler) requireUserAndBook(w http.ResponseWriter, r *http.Request) (*model.User, *model.Book, bool) {
@@ -359,9 +351,4 @@ func (h *ChaptersHandler) loadOwnedChapter(w http.ResponseWriter, r *http.Reques
 		return nil, false
 	}
 	return chapter, true
-}
-
-func chapterIDPath(path string) int {
-	id, _ := strconv.Atoi(pathPart(path, 2))
-	return id
 }

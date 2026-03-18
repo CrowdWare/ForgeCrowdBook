@@ -99,6 +99,22 @@ func TestNormalizeIPFSURL(t *testing.T) {
 	}
 }
 
+func TestNormalizeURLDefaultGatewayAndHTTPUnchanged(t *testing.T) {
+	f, err := New(t.TempDir(), filepath.Join(t.TempDir(), "manifest.json"), 300, "")
+	if err != nil {
+		t.Fatalf("New failed: %v", err)
+	}
+
+	if got := f.NormalizeURL("ipfs://QmABC"); got != "https://ipfs.io/ipfs/QmABC" {
+		t.Fatalf("default gateway normalization failed: %q", got)
+	}
+
+	httpURL := "https://codeberg.org/crowdware/project/raw/main/file.md"
+	if got := f.NormalizeURL(httpURL); got != httpURL {
+		t.Fatalf("expected unchanged URL, got %q", got)
+	}
+}
+
 func TestManifestPersistsAcrossRestarts(t *testing.T) {
 	cacheDir := t.TempDir()
 	manifestPath := filepath.Join(t.TempDir(), "manifest.json")
@@ -134,5 +150,36 @@ func TestManifestPersistsAcrossRestarts(t *testing.T) {
 
 	if requestCount != 2 {
 		t.Fatalf("expected 2 HTTP requests, got %d", requestCount)
+	}
+}
+
+func TestMarkdownIntegritySpecialCharacters(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+		_, _ = w.Write([]byte("---\n\n> quote\n\n`<code>`"))
+	}))
+	defer srv.Close()
+
+	f, err := New(t.TempDir(), filepath.Join(t.TempDir(), "manifest.json"), 300, "https://ipfs.io/ipfs/")
+	if err != nil {
+		t.Fatalf("New failed: %v", err)
+	}
+
+	html, err := f.FetchHTML(srv.URL)
+	if err != nil {
+		t.Fatalf("FetchHTML failed: %v", err)
+	}
+
+	if !strings.Contains(html, "<hr") {
+		t.Fatalf("expected <hr>, got %q", html)
+	}
+	if strings.Contains(html, "&#x2014;") {
+		t.Fatalf("unexpected em-dash encoding in html: %q", html)
+	}
+	if !strings.Contains(html, "<blockquote>") || strings.Contains(html, "&gt; quote") {
+		t.Fatalf("blockquote rendering mismatch: %q", html)
+	}
+	if !strings.Contains(html, "<code>&lt;code&gt;</code>") {
+		t.Fatalf("expected code element to be preserved, got %q", html)
 	}
 }

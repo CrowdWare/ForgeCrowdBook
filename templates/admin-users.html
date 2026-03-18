@@ -1,0 +1,25 @@
+{{ define "content" }}
+<h1>Admin Users</h1>
+<table>
+    <thead>
+        <tr><th>Name</th><th>Email</th><th>Status</th><th>Chapters</th><th>Registered</th><th>Actions</th></tr>
+    </thead>
+    <tbody>
+        {{ range .Rows }}
+            <tr>
+                <td>{{ .Name }}</td>
+                <td>{{ .Email }}</td>
+                <td><span class="status {{ .Status }}">{{ .Status }}</span></td>
+                <td>{{ .ChapterCnt }}</td>
+                <td>{{ .CreatedAt }}</td>
+                <td>
+                    <form method="POST" action="/admin/users/{{ .ID }}/ban" class="inline">
+                        <button type="submit">Ban</button>
+                    </form>
+                </td>
+            </tr>
+        {{ end }}
+    </tbody>
+</table>
+{{ end }}
+{{ template "base" . }}

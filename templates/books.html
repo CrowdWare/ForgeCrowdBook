@@ -1,0 +1,12 @@
+{{ define "content" }}
+<h1>Books</h1>
+<div class="grid">
+    {{ range .Books }}
+        <article class="card">
+            <h2><a href="/books/{{ .Slug }}">{{ .Title }}</a></h2>
+            <p>{{ .Description }}</p>
+        </article>
+    {{ end }}
+</div>
+{{ end }}
+{{ template "base" . }}

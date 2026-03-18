@@ -72,12 +72,12 @@ See `SPEC.md` for full specification.
 - [x] tasks/handler_api.md
 
 ### Phase 5 — Frontend
-- [ ] tasks/templates_base.md
-- [ ] tasks/templates_pages.md
-- [ ] tasks/static_assets.md  ← style.css + preview.js only (no EasyMDE)
+- [x] tasks/templates_base.md
+- [x] tasks/templates_pages.md
+- [x] tasks/static_assets.md  ← style.css + preview.js only (no EasyMDE)
 
 ### Phase 6 — Tests
-- [ ] tasks/unit_tests_config.md
-- [ ] tasks/unit_tests_auth.md
-- [ ] tasks/unit_tests_fetcher.md
-- [ ] tasks/integration_test.md
+- [x] tasks/unit_tests_config.md
+- [x] tasks/unit_tests_auth.md
+- [x] tasks/unit_tests_fetcher.md
+- [x] tasks/integration_test.md

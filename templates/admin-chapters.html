@@ -1,0 +1,38 @@
+{{ define "content" }}
+<h1>Admin Chapters</h1>
+<form method="GET" action="/admin/chapters" class="inline">
+    <select name="status">
+        <option value="all">all</option>
+        <option value="pending_review">pending_review</option>
+        <option value="published">published</option>
+        <option value="rejected">rejected</option>
+    </select>
+    <input type="date" name="date" value="{{ .DateFrom }}">
+    <button type="submit">Filter</button>
+</form>
+<table>
+    <thead>
+        <tr><th>Title</th><th>Author</th><th>Book</th><th>Path</th><th>Status</th><th>Likes</th><th>Created</th><th>Actions</th></tr>
+    </thead>
+    <tbody>
+        {{ range .Rows }}
+            <tr>
+                <td>{{ .Title }}</td>
+                <td>{{ .Author }}</td>
+                <td>{{ .Book }}</td>
+                <td>{{ .PathLabel }}</td>
+                <td><span class="status {{ .Status }}">{{ .Status }}</span></td>
+                <td>{{ .LikeCount }}</td>
+                <td>{{ .CreatedAt }}</td>
+                <td>
+                    <a href="/dashboard/chapters/{{ .ID }}">Preview</a>
+                    <form method="POST" action="/admin/chapters/{{ .ID }}/publish" class="inline"><button type="submit">Publish</button></form>
+                    <form method="POST" action="/admin/chapters/{{ .ID }}/reject" class="inline"><button type="submit">Reject</button></form>
+                    <form method="POST" action="/admin/chapters/{{ .ID }}/delete" class="inline"><button type="submit">Delete</button></form>
+                </td>
+            </tr>
+        {{ end }}
+    </tbody>
+</table>
+{{ end }}
+{{ template "base" . }}

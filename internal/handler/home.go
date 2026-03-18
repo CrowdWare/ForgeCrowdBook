@@ -2,7 +2,6 @@ package handler
 
 import (
 	"database/sql"
-	"fmt"
 	"net/http"
 
 	"codeberg.org/crowdware/forgecrowdbook/internal/auth"
@@ -30,7 +29,9 @@ func (h *HomeHandler) Home(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	fmt.Fprint(w, `<html><body><h1>ForgeCrowdBook</h1><p>Collaborative branching fiction with chapter moderation.</p><p><a href="/books">Read the book</a></p><p><a href="/register">Write your chapter</a></p></body></html>`)
+	renderPage(w, r, h.DB, h.Config, h.I18N, "home", map[string]any{
+		"Title": "Home",
+	})
 }
 
 func (h *HomeHandler) Logout(w http.ResponseWriter, r *http.Request) {
