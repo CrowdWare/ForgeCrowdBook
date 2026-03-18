@@ -109,6 +109,7 @@ go test ./...
 ## Project Docs
 
 - Full specification: [`spec.md`](spec.md)
+- Deployment guide: [`CWUP/DEPLOYMENT.md`](CWUP/DEPLOYMENT.md)
 - Work backlog: [`CWUP/BACKLOG.md`](CWUP/BACKLOG.md)
 - Release checklist: [`RELEASE.md`](RELEASE.md)
 
