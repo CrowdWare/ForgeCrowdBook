@@ -44,19 +44,19 @@ See `SPEC.md` for full specification.
 ## Tasks
 
 ### Phase 1 — Foundation
-- [ ] tasks/go_module_setup.md
-- [ ] tasks/config_parser.md
-- [ ] tasks/db_init.md
-- [ ] tasks/i18n.md
-- [ ] tasks/content_fetcher.md
+- [x] tasks/go_module_setup.md
+- [x] tasks/config_parser.md
+- [x] tasks/db_init.md
+- [x] tasks/i18n.md
+- [x] tasks/content_fetcher.md
 
 ### Phase 2 — Auth
-- [ ] tasks/auth_magic_link.md
-- [ ] tasks/auth_session.md
-- [ ] tasks/mailer.md
+- [x] tasks/auth_magic_link.md
+- [x] tasks/auth_session.md
+- [x] tasks/mailer.md
 
 ### Phase 3 — Models
-- [ ] tasks/model_user.md
+- [x] tasks/model_user.md
 - [ ] tasks/model_book.md
 - [ ] tasks/model_chapter.md  ← stores source_url, not markdown_content
 - [ ] tasks/model_like.md
