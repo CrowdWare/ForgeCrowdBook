@@ -1,5 +1,5 @@
 {{ define "content" }}
-<h1>Admin Chapters</h1>
+<h1>{{ t "admin_chapters_title" }}</h1>
 <form method="GET" action="/admin/chapters" class="inline">
     <select name="status">
         <option value="all">all</option>
@@ -8,11 +8,11 @@
         <option value="rejected">rejected</option>
     </select>
     <input type="date" name="date" value="{{ .DateFrom }}">
-    <button type="submit">Filter</button>
+    <button type="submit">{{ t "btn_filter" }}</button>
 </form>
 <table>
     <thead>
-        <tr><th>Title</th><th>Author</th><th>Book</th><th>Path</th><th>Status</th><th>Likes</th><th>Created</th><th>Actions</th></tr>
+        <tr><th>{{ t "label_title" }}</th><th>{{ t "label_author" }}</th><th>{{ t "label_book" }}</th><th>{{ t "label_path" }}</th><th>{{ t "label_status" }}</th><th>{{ t "label_likes" }}</th><th>{{ t "label_created" }}</th><th>{{ t "label_actions" }}</th></tr>
     </thead>
     <tbody>
         {{ range .Rows }}
@@ -25,10 +25,10 @@
                 <td>{{ .LikeCount }}</td>
                 <td>{{ .CreatedAt }}</td>
                 <td>
-                    <a href="/dashboard/chapters/{{ .ID }}">Preview</a>
-                    <form method="POST" action="/admin/chapters/{{ .ID }}/publish" class="inline"><button type="submit">Publish</button></form>
-                    <form method="POST" action="/admin/chapters/{{ .ID }}/reject" class="inline"><button type="submit">Reject</button></form>
-                    <form method="POST" action="/admin/chapters/{{ .ID }}/delete" class="inline"><button type="submit">Delete</button></form>
+                    <a href="/dashboard/chapters/{{ .ID }}">{{ t "btn_preview" }}</a>
+                    <form method="POST" action="/admin/chapters/{{ .ID }}/publish" class="inline"><button type="submit">{{ t "btn_publish" }}</button></form>
+                    <form method="POST" action="/admin/chapters/{{ .ID }}/reject" class="inline"><button type="submit">{{ t "btn_reject" }}</button></form>
+                    <form method="POST" action="/admin/chapters/{{ .ID }}/delete" class="inline"><button type="submit">{{ t "btn_delete" }}</button></form>
                 </td>
             </tr>
         {{ end }}

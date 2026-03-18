@@ -1,6 +1,6 @@
 {{ define "content" }}
-<h1>Login link error</h1>
+<h1>{{ t "auth_error_title" }}</h1>
 <p>{{ .Message }}</p>
-<p><a href="/login">Try again</a></p>
+<p><a href="/login">{{ t "auth_try_again" }}</a></p>
 {{ end }}
 {{ template "base" . }}

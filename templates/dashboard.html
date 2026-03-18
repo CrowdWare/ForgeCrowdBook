@@ -1,5 +1,5 @@
 {{ define "content" }}
-<h1>Welcome, {{ .User.DisplayName }}</h1>
+<h1>{{ t "dashboard_welcome" }}, {{ .User.DisplayName }}</h1>
 <div class="grid">
     {{ range .Books }}
         <article class="card">
@@ -7,14 +7,14 @@
             <p>{{ .Description }}</p>
             <form method="POST" action="/dashboard/book/{{ .ID }}/select">
                 <button type="submit">
-                    {{ if and $.ActiveBook (eq $.ActiveBook.ID .ID) }}Selected{{ else }}Select{{ end }}
+                    {{ if and $.ActiveBook (eq $.ActiveBook.ID .ID) }}{{ t "dashboard_selected" }}{{ else }}{{ t "dashboard_select" }}{{ end }}
                 </button>
             </form>
         </article>
     {{ end }}
 </div>
 {{ if .ActiveBook }}
-    <p><a href="/dashboard/chapters">My Chapters</a></p>
+    <p><a href="/dashboard/chapters">{{ t "chapters_title" }}</a></p>
 {{ end }}
 {{ end }}
 {{ template "base" . }}

@@ -13,5 +13,5 @@ data/*.db-wal
 # macOS
 .DS_Store
 
-# Config with secrets (use app.sml.example as template)
+# Config with secrets (use app-demo.sml as template)
 app.sml

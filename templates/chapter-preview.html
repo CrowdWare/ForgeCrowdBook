@@ -1,15 +1,15 @@
 {{ define "content" }}
 <h1>{{ .Chapter.Title }}</h1>
-<p>Path: {{ .Chapter.PathLabel }}</p>
-<p>Status: <span class="status {{ .Chapter.Status }}">{{ .Chapter.Status }}</span></p>
-<p><a class="btn" href="/dashboard/chapters/{{ .Chapter.ID }}/edit">Edit</a></p>
+<p>{{ t "label_path" }}: {{ .Chapter.PathLabel }}</p>
+<p>{{ t "label_status" }}: <span class="status {{ .Chapter.Status }}">{{ .Chapter.Status }}</span></p>
+<p><a class="btn" href="/dashboard/chapters/{{ .Chapter.ID }}/edit">{{ t "btn_edit" }}</a></p>
 {{ if eq .Chapter.Status "draft" }}
     <form method="POST" action="/dashboard/chapters/{{ .Chapter.ID }}/submit">
-        <button type="submit">Submit for Review</button>
+        <button type="submit">{{ t "btn_submit_review" }}</button>
     </form>
 {{ end }}
 <form method="POST" action="/dashboard/chapters/{{ .Chapter.ID }}/refresh">
-    <button type="submit">Refresh Content</button>
+    <button type="submit">{{ t "btn_refresh_content" }}</button>
 </form>
 <section class="preview-area markdown">{{ .Content }}</section>
 {{ end }}

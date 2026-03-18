@@ -1,13 +1,13 @@
 {{ define "content" }}
-<h1>Register</h1>
+<h1>{{ t "nav_register" }}</h1>
 <form method="POST" action="/register" class="stack">
-    <label>Display name
+    <label>{{ t "label_display_name" }}
         <input type="text" name="display_name" required>
     </label>
-    <label>Email
+    <label>{{ t "label_email" }}
         <input type="email" name="email" required>
     </label>
-    <button type="submit">Register</button>
+    <button type="submit">{{ t "nav_register" }}</button>
 </form>
 {{ end }}
 {{ template "base" . }}

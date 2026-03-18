@@ -3,17 +3,17 @@
 <meta property="og:description" content="{{ .OGDesc }}">
 {{ end }}
 {{ define "content" }}
-<p><a href="/books/{{ .Book.Slug }}">Back to book</a></p>
+<p><a href="/books/{{ .Book.Slug }}">{{ t "btn_back_to_book" }}</a></p>
 <h1>{{ .Chapter.Title }}</h1>
 <div class="markdown">{{ .Rendered }}</div>
-<button class="like-btn" data-chapter-id="{{ .Chapter.ID }}" id="like-btn">Like</button>
-<p id="like-count">Likes: {{ .Chapter.LikeCount }}</p>
+<button class="like-btn" data-chapter-id="{{ .Chapter.ID }}" id="like-btn">{{ t "btn_like" }}</button>
+<p id="like-count">{{ t "label_likes" }}: {{ .Chapter.LikeCount }}</p>
 <div class="share">
     <a href="https://t.me/share/url?url={{ .ShareURL }}">Telegram</a>
     <a href="https://wa.me/?text={{ .ShareURL }}">WhatsApp</a>
     <a href="https://www.facebook.com/sharer/sharer.php?u={{ .ShareURL }}">Facebook</a>
     <a href="https://x.com/intent/post?url={{ .ShareURL }}">X</a>
-    <button id="copy-link" data-url="{{ .ShareURL }}">Copy Link</button>
+    <button id="copy-link" data-url="{{ .ShareURL }}">{{ t "btn_copy_link" }}</button>
 </div>
 {{ end }}
 {{ define "scripts" }}
@@ -23,7 +23,7 @@ document.getElementById("like-btn")?.addEventListener("click", async function ()
   const res = await fetch("/api/like/" + id, { method: "POST" });
   if (!res.ok) return;
   const data = await res.json();
-  document.getElementById("like-count").textContent = "Likes: " + data.count;
+  document.getElementById("like-count").textContent = "{{ t "label_likes" }}: " + data.count;
 });
 document.getElementById("copy-link")?.addEventListener("click", function () {
   navigator.clipboard.writeText(this.dataset.url);

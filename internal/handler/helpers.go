@@ -57,7 +57,11 @@ func renderPage(w http.ResponseWriter, r *http.Request, db *sql.DB, cfg *config.
 		filepath.Join(templateDir, page+".html"),
 	}
 
-	tpl, err := template.ParseFiles(paths...)
+	tpl, err := template.New("base").Funcs(template.FuncMap{
+		"t": func(key string) string {
+			return bundle.T(nav.Lang, key)
+		},
+	}).ParseFiles(paths...)
 	if err != nil {
 		http.Error(w, "failed to parse template", http.StatusInternalServerError)
 		return

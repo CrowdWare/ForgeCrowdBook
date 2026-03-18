@@ -1,20 +1,20 @@
 {{ define "content" }}
-<h1>{{ if .IsEdit }}Edit Chapter{{ else }}Register Chapter{{ end }}</h1>
-<p>Active book: {{ .ActiveBook.Title }}</p>
+<h1>{{ if .IsEdit }}{{ t "editor_edit_title" }}{{ else }}{{ t "editor_new_title" }}{{ end }}</h1>
+<p>{{ t "active_book_label" }}: {{ .ActiveBook.Title }}</p>
 <form method="POST" action="{{ .FormAction }}" class="stack" id="chapter-form">
-    <label>Title
+    <label>{{ t "label_title" }}
         <input type="text" name="title" value="{{ .Chapter.Title }}" required>
     </label>
-    <label>Path Label
+    <label>{{ t "label_path" }}
         <input type="text" name="path_label" value="{{ .Chapter.PathLabel }}">
     </label>
-    <label>Source URL
+    <label>{{ t "label_source_url" }}
         <input type="url" id="source-url" name="source_url" value="{{ .Chapter.SourceURL }}" required placeholder="https://codeberg.org/you/mybook/raw/branch/main/chapter.md">
     </label>
     <button type="submit" id="submit-btn" {{ if not .IsEdit }}disabled{{ end }}>{{ .ButtonText }}</button>
 </form>
 <div class="preview-widget">
-    <button id="load-preview" data-url="/dashboard/preview">Load Preview</button>
+    <button id="load-preview" data-url="/dashboard/preview">{{ t "btn_load_preview" }}</button>
     <div id="preview-area"></div>
 </div>
 {{ end }}

@@ -5,14 +5,14 @@
     {{ range .Chapters }}
         <article class="card chapter">
             <h2>{{ .Title }}</h2>
-            <p>By {{ .Author }}</p>
-            <p>Path: {{ .PathLabel }}</p>
+            <p>{{ t "label_by" }} {{ .Author }}</p>
+            <p>{{ t "label_path" }}: {{ .PathLabel }}</p>
             <p>{{ .Excerpt }}</p>
-            <p>Likes: {{ .LikeCount }}</p>
-            <a class="btn" href="/books/{{ $.Book.Slug }}/{{ .Slug }}">Read</a>
+            <p>{{ t "label_likes" }}: {{ .LikeCount }}</p>
+            <a class="btn" href="/books/{{ $.Book.Slug }}/{{ .Slug }}">{{ t "btn_read" }}</a>
         </article>
     {{ else }}
-        <p>No published chapters yet.</p>
+        <p>{{ t "book_no_published" }}</p>
     {{ end }}
 </div>
 {{ end }}

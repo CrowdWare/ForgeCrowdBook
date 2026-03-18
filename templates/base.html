@@ -11,18 +11,18 @@
 <body>
     <nav class="nav">
         <a class="brand" href="/">ForgeCrowdBook</a>
-        <a href="/">Home</a>
-        <a href="/books">Books</a>
+        <a href="/">{{ t "nav_home" }}</a>
+        <a href="/books">{{ t "nav_books" }}</a>
         {{ if .Nav.LoggedIn }}
-            <a href="/dashboard">Dashboard</a>
+            <a href="/dashboard">{{ t "nav_dashboard" }}</a>
             {{ if .Nav.ActiveBook }}<span class="badge">{{ .Nav.ActiveBook.Title }}</span>{{ end }}
-            {{ if .Nav.IsAdmin }}<a href="/admin/chapters">Admin</a>{{ end }}
+            {{ if .Nav.IsAdmin }}<a href="/admin/chapters">{{ t "nav_admin" }}</a>{{ end }}
             <form method="POST" action="/logout" class="inline">
-                <button type="submit">Logout</button>
+                <button type="submit">{{ t "nav_logout" }}</button>
             </form>
         {{ else }}
-            <a href="/login">Login</a>
-            <a href="/register">Register</a>
+            <a href="/login">{{ t "nav_login" }}</a>
+            <a href="/register">{{ t "nav_register" }}</a>
         {{ end }}
         <form method="POST" action="/lang" class="inline">
             <select name="lang" onchange="this.form.submit()">

@@ -1,10 +1,10 @@
 {{ define "content" }}
-<h1>Login</h1>
+<h1>{{ t "nav_login" }}</h1>
 <form method="POST" action="/login" class="stack">
-    <label>Email
+    <label>{{ t "label_email" }}
         <input type="email" name="email" required>
     </label>
-    <button type="submit">Send login link</button>
+    <button type="submit">{{ t "login_send_link" }}</button>
 </form>
 {{ end }}
 {{ template "base" . }}

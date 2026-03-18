@@ -1,8 +1,8 @@
 {{ define "content" }}
-<h1>Admin Users</h1>
+<h1>{{ t "admin_users_title" }}</h1>
 <table>
     <thead>
-        <tr><th>Name</th><th>Email</th><th>Status</th><th>Chapters</th><th>Registered</th><th>Actions</th></tr>
+        <tr><th>{{ t "label_display_name" }}</th><th>{{ t "label_email" }}</th><th>{{ t "label_status" }}</th><th>{{ t "label_chapters" }}</th><th>{{ t "label_registered" }}</th><th>{{ t "label_actions" }}</th></tr>
     </thead>
     <tbody>
         {{ range .Rows }}
@@ -14,7 +14,7 @@
                 <td>{{ .CreatedAt }}</td>
                 <td>
                     <form method="POST" action="/admin/users/{{ .ID }}/ban" class="inline">
-                        <button type="submit">Ban</button>
+                        <button type="submit">{{ t "btn_ban" }}</button>
                     </form>
                 </td>
             </tr>
